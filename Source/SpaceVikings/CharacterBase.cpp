@@ -2,11 +2,11 @@
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h" 
-#include "SpaceVikingsCharacterBase.h"
-#include "SpaceVikingsProjectileBase.h"
+#include "CharacterBase.h"
+#include "ProjectileBase.h"
 
 // Sets default values
-ASpaceVikingsCharacterBase::ASpaceVikingsCharacterBase()
+ACharacterBase::ACharacterBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -24,7 +24,7 @@ ASpaceVikingsCharacterBase::ASpaceVikingsCharacterBase()
 }
 
 // Called when the game starts or when spawned
-void ASpaceVikingsCharacterBase::BeginPlay()
+void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	check(GEngine != nullptr);
@@ -36,53 +36,53 @@ void ASpaceVikingsCharacterBase::BeginPlay()
 }
 
 // Called every frame
-void ASpaceVikingsCharacterBase::Tick(float DeltaTime)
+void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
 // Called to bind functionality to input
-void ASpaceVikingsCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	// Set up movements
-	PlayerInputComponent->BindAxis("MoveForward", this, &ASpaceVikingsCharacterBase::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &ASpaceVikingsCharacterBase::MoveRight);
+	PlayerInputComponent->BindAxis("MoveForward", this, &ACharacterBase::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ACharacterBase::MoveRight);
 	// Set up "look" bindings.
 	//PlayerInputComponent->BindAxis("Turn", this, &ASpaceVikingsCharacterBase::AddControllerYawInput);
 	//PlayerInputComponent->BindAxis("LookUp", this, &ASpaceVikingsCharacterBase::AddControllerPitchInput);
 	// Set up "jump" bindings.
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASpaceVikingsCharacterBase::StartJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ASpaceVikingsCharacterBase::StopJump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacterBase::StartJump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacterBase::StopJump);
 	// Set up "fire" bindings
-	PlayerInputComponent->BindAction("Fire", IE_Released, this, & ASpaceVikingsCharacterBase::Fire);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ACharacterBase::Fire);
 }
 
 #pragma region Movements
-void ASpaceVikingsCharacterBase::MoveForward(float Value) {
+void ACharacterBase::MoveForward(float Value) {
 	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::X);
 	AddMovementInput(direction, Value);
 }
 
-void ASpaceVikingsCharacterBase::MoveRight(float Value) {
+void ACharacterBase::MoveRight(float Value) {
 	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::Y);
 	AddMovementInput(direction, Value);
 }
 
-void ASpaceVikingsCharacterBase::StartJump()
+void ACharacterBase::StartJump()
 {
 	bPressedJump = true;
 }
 
-void ASpaceVikingsCharacterBase::StopJump()
+void ACharacterBase::StopJump()
 {
 	bPressedJump = false;
 }
 #pragma endregion Movements
 
 #pragma region Actions
-void ASpaceVikingsCharacterBase::Fire() {
+void ACharacterBase::Fire() {
 	if (ProjectileClass) {
 		//Get camera transform
 		FVector CameraLocation;
@@ -108,7 +108,7 @@ void ASpaceVikingsCharacterBase::Fire() {
 			SpawnParams.Instigator = GetInstigator();
 
 			//Spawn the projectile at the muzzle
-			ASpaceVikingsProjectileBase* Projectile = World->SpawnActor<ASpaceVikingsProjectileBase>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+			AProjectileBase* Projectile = World->SpawnActor<AProjectileBase>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
 			if (Projectile) {
 				//Set the projectile's initial trajectory
 				FVector LaunchDirection = MuzzleRotation.Vector();

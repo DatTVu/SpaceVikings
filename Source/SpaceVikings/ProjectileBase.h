@@ -6,16 +6,16 @@
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "SpaceVikingsProjectileBase.generated.h"
+#include "ProjectileBase.generated.h"
 
 UCLASS()
-class SPACEVIKINGS_API ASpaceVikingsProjectileBase : public AActor
+class SPACEVIKINGS_API AProjectileBase : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ASpaceVikingsProjectileBase();
+	AProjectileBase();
 
 protected:
 	// Called when the game starts or when spawned

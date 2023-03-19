@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-	#include "SpaceVikingsProjectileBase.h"
+	#include "ProjectileBase.h"
 
 // Sets default values
-ASpaceVikingsProjectileBase::ASpaceVikingsProjectileBase()
+AProjectileBase::AProjectileBase()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -16,7 +16,7 @@ ASpaceVikingsProjectileBase::ASpaceVikingsProjectileBase()
 		// Set the sphere's collision profile name to "Projectile".
 		CollisionComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
 		// Event called when component hits something.
-		CollisionComponent->OnComponentHit.AddDynamic(this, &ASpaceVikingsProjectileBase::OnHit);
+		CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectileBase::OnHit);
 		//Set the sphere's collision radius
 		//TO-DO: remove magic number here
 		CollisionComponent->InitSphereRadius(15.0f);
@@ -57,25 +57,25 @@ ASpaceVikingsProjectileBase::ASpaceVikingsProjectileBase()
 }
 
 // Called when the game starts or when spawned
-void ASpaceVikingsProjectileBase::BeginPlay()
+void AProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
 // Called every frame
-void ASpaceVikingsProjectileBase::Tick(float DeltaTime)
+void AProjectileBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void ASpaceVikingsProjectileBase::FireInDirection(const FVector& ShootDirection) {
+void AProjectileBase::FireInDirection(const FVector& ShootDirection) {
 	ProjectileMovementComponent->Velocity = ShootDirection * ProjectileMovementComponent->InitialSpeed;
 }
 
 // Function that is called when the projectile hits something.
-void ASpaceVikingsProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
+void AProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
 	if (OtherActor != this && OtherComponent->IsSimulatingPhysics())
 	{

@@ -6,16 +6,16 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
-#include "SpaceVikingsCharacterBase.generated.h"
+#include "CharacterBase.generated.h"
 
 UCLASS()
-class SPACEVIKINGS_API ASpaceVikingsCharacterBase : public ACharacter
+class SPACEVIKINGS_API ACharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
-	ASpaceVikingsCharacterBase();
+	ACharacterBase();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,7 +23,7 @@ protected:
 
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
-	TSubclassOf<class ASpaceVikingsProjectileBase> ProjectileClass;
+	TSubclassOf<class AProjectileBase> ProjectileClass;
 
 	// TopDown camera.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
