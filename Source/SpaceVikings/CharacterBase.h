@@ -20,16 +20,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AProjectileBase> ProjectileClass;
-
-	// TopDown camera.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
-	class USpringArmComponent* m_CameraBoom;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
-	class UCameraComponent* m_FollowTopDownCamera;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
