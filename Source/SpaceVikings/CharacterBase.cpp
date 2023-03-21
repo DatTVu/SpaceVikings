@@ -2,12 +2,21 @@
 
 #include "CharacterBase.h"
 #include "ProjectileBase.h"
+#include "AbilitySystemGlobals.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	// Create ability system component, and set it to be explicitly replicated
+	//AbilitySystemComponent = CreateDefaultSubobject<USKAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	//AbilitySystemComponent->SetIsReplicated(true);
+	// Create the attribute set, this replicates by default
+	AttributeSet = CreateDefaultSubobject<UAttributeSetBase>(TEXT("AttributeSet"));
+	bAbilitiesInitialized = false;
+
 }
 
 // Called when the game starts or when spawned
@@ -87,3 +96,66 @@ void ACharacterBase::Fire() {
 	}
 }
 #pragma endregion Actions
+
+#pragma region AttributeSet
+void ACharacterBase::HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorPawn, AActor* DamageCauser)
+{
+	OnDamaged(DamageAmount, HitInfo, DamageTags, InstigatorPawn, DamageCauser);
+}
+
+void ACharacterBase::HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
+{
+	// We only call the BP callback if this is not the initial ability setup
+	if (bAbilitiesInitialized)
+	{
+		OnHealthChanged(DeltaValue, EventTags);
+	}
+}
+
+void ACharacterBase::HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
+{
+	if (bAbilitiesInitialized)
+	{
+		OnManaChanged(DeltaValue, EventTags);
+	}
+}
+
+void ACharacterBase::HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
+{
+	// Update the character movement's walk speed
+	GetCharacterMovement()->MaxWalkSpeed = GetMoveSpeed();
+
+	if (bAbilitiesInitialized)
+	{
+		OnMoveSpeedChanged(DeltaValue, EventTags);
+	}
+}
+
+float ACharacterBase::GetHealth() const
+{
+	if (!AttributeSet)
+		return 1.f;
+
+	return AttributeSet->GetHealth();
+}
+
+float ACharacterBase::GetMaxHealth() const
+{
+	return AttributeSet->GetMaxHealth();
+}
+
+float ACharacterBase::GetMana() const
+{
+	return AttributeSet->GetMana();
+}
+
+float ACharacterBase::GetMaxMana() const
+{
+	return AttributeSet->GetMaxMana();
+}
+
+float ACharacterBase::GetMoveSpeed() const
+{
+	return AttributeSet->GetMoveSpeed();
+}
+#pragma endregion AttributSet
