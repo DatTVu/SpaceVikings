@@ -7,13 +7,13 @@
 #include "GameplayEffectExtension.h"
 
 UAttributeSetBase::UAttributeSetBase()
-	: Health(1.f)
-	, MaxHealth(1.f)
-	, Mana(0.f)
-	, MaxMana(0.f)
-	, AttackPower(1.0f)
-	, DefensePower(1.0f)
-	, MoveSpeed(1.0f)
+	: Health(100.f)
+	, MaxHealth(100.f)
+	, Mana(100.f)
+	, MaxMana(100.f)
+	, AttackPower(10.0f)
+	, DefensePower(5.0f)
+	, MoveSpeed(2.0f)
 	, Damage(0.0f)
 {
 }
@@ -177,10 +177,10 @@ void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			if (TargetCharacter)
 			{
 				// This is proper damage
-				TargetCharacter->HandleDamage(LocalDamageDone, HitResult, SourceTags, SourceCharacter, SourceActor);
+				//TargetCharacter->HandleDamage(LocalDamageDone, HitResult, SourceTags, SourceCharacter, SourceActor);
 
 				// Call for all health changes
-				TargetCharacter->HandleHealthChanged(-LocalDamageDone, SourceTags);
+				//TargetCharacter->HandleHealthChanged(-LocalDamageDone, SourceTags);
 			}
 		}
 	}
@@ -193,7 +193,7 @@ void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		if (TargetCharacter)
 		{
 			// Call for all health changes
-			TargetCharacter->HandleHealthChanged(DeltaValue, SourceTags);
+			//TargetCharacter->HandleHealthChanged(DeltaValue, SourceTags);
 		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetManaAttribute())
@@ -204,7 +204,7 @@ void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		if (TargetCharacter)
 		{
 			// Call for all mana changes
-			TargetCharacter->HandleManaChanged(DeltaValue, SourceTags);
+			//TargetCharacter->HandleManaChanged(DeltaValue, SourceTags);
 		}
 	}
 	else if (Data.EvaluatedData.Attribute == GetMoveSpeedAttribute())
@@ -212,7 +212,7 @@ void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		if (TargetCharacter)
 		{
 			// Call for all movespeed changes
-			TargetCharacter->HandleMoveSpeedChanged(DeltaValue, SourceTags);
+			//TargetCharacter->HandleMoveSpeedChanged(DeltaValue, SourceTags);
 		}
 	}
 }

@@ -3,20 +3,25 @@
 #include "CharacterBase.h"
 #include "ProjectileBase.h"
 #include "AbilitySystemGlobals.h"
+#include "AbilitySystemComponent.h"
+#include "AttributeSetBase.h"
+#include "SKGameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 ACharacterBase::ACharacterBase()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	// Create ability system component, and set it to be explicitly replicated
-	//AbilitySystemComponent = CreateDefaultSubobject<USKAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	//AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	// Create the attribute set, this replicates by default
 	AttributeSet = CreateDefaultSubobject<UAttributeSetBase>(TEXT("AttributeSet"));
-	bAbilitiesInitialized = false;
-
+	bIsCharacterAbilitiesGranted = false;
+	bIsCharacterEffectsGranted = false;
+	bIsInputBound = false;
 }
 
 // Called when the game starts or when spawned
@@ -35,9 +40,77 @@ void ACharacterBase::Tick(float DeltaTime)
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	SetupAbilitiesInputs();
+}
+
+void ACharacterBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	if ( AbilitySystemComponent && AttributeSet) {
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		AddInitialCharacterAbilities();
+		AddInitialCharacterEffects();
+	}
+}
+
+void ACharacterBase::AddInitialCharacterAbilities() {
+	if (!AbilitySystemComponent || bIsCharacterAbilitiesGranted) {
+		return;
+	}
+
+	for (TSubclassOf<USKGameplayAbility> CurrentGameplayAbilityClass : InitialGameplayAbilities) {
+		if (IsValid(CurrentGameplayAbilityClass)) {
+			USKGameplayAbility* CurrentAbility = CurrentGameplayAbilityClass->GetDefaultObject<USKGameplayAbility>();
+			if (IsValid(CurrentAbility)) {
+				FGameplayAbilitySpec AbilitySpec(CurrentAbility, 1, static_cast<int32>(CurrentAbility->AbilityInputID), this);
+				AbilitySystemComponent->GiveAbility(AbilitySpec);
+			}
+		}
+	}
+	bIsCharacterAbilitiesGranted = true;
+}
+
+void ACharacterBase::AddInitialCharacterEffects() {
+	if (!AbilitySystemComponent || bIsCharacterEffectsGranted) {
+		return;
+	}
+
+	FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(this);
+
+	for (TSubclassOf<UGameplayEffect> CurrentGameplayEffectClass : InitialGameplayEffects) {
+		if (IsValid(CurrentGameplayEffectClass)) {
+			FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(CurrentGameplayEffectClass, 1.0f, EffectContextHandle);
+			if (CurrentGameplayEffectSpecHandle.IsValid()) {
+				//FActiveGameplayEffectHandle ActiveGameplayEffectHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), AbilitySystemComponent);
+				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), AbilitySystemComponent);
+			}
+		}
+	}
+	bIsCharacterAbilitiesGranted = true;
+}
+
+void ACharacterBase::SetupAbilitiesInputs() {
+	if (!AbilitySystemComponent || !InputComponent|| bIsInputBound) {
+		return;
+	}
+
+	AbilitySystemComponent->BindAbilityActivationToInputComponent(
+		InputComponent,
+		FGameplayAbilityInputBinds(
+			"Confirm",
+			"Cancel",
+			"ESK_AbilityInput",
+			static_cast<uint32>(ESK_AbilityInput::Confirm),
+			static_cast<uint32>(ESK_AbilityInput::Cancel)
+		)
+	);
+	bIsInputBound = true;
 }
 
 #pragma region Movements
+
 void ACharacterBase::MoveForward(float Value) {
 	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::X);
 	AddMovementInput(direction, Value);
@@ -98,7 +171,7 @@ void ACharacterBase::Fire() {
 #pragma endregion Actions
 
 #pragma region AttributeSet
-void ACharacterBase::HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorPawn, AActor* DamageCauser)
+/*void ACharacterBase::HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorPawn, AActor* DamageCauser)
 {
 	OnDamaged(DamageAmount, HitInfo, DamageTags, InstigatorPawn, DamageCauser);
 }
@@ -106,18 +179,18 @@ void ACharacterBase::HandleDamage(float DamageAmount, const FHitResult& HitInfo,
 void ACharacterBase::HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
 {
 	// We only call the BP callback if this is not the initial ability setup
-	if (bAbilitiesInitialized)
-	{
+	//if (bAbilitiesInitialized)
+	//{
 		OnHealthChanged(DeltaValue, EventTags);
-	}
+	//}
 }
 
 void ACharacterBase::HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
 {
-	if (bAbilitiesInitialized)
-	{
+	//if (bAbilitiesInitialized)
+	//{
 		OnManaChanged(DeltaValue, EventTags);
-	}
+	//}
 }
 
 void ACharacterBase::HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
@@ -125,12 +198,12 @@ void ACharacterBase::HandleMoveSpeedChanged(float DeltaValue, const struct FGame
 	// Update the character movement's walk speed
 	GetCharacterMovement()->MaxWalkSpeed = GetMoveSpeed();
 
-	if (bAbilitiesInitialized)
-	{
+	//if (bAbilitiesInitialized)
+	//{
 		OnMoveSpeedChanged(DeltaValue, EventTags);
-	}
+	//}
 }
-
+*/
 float ACharacterBase::GetHealth() const
 {
 	if (!AttributeSet)

@@ -3,15 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
-#include "AttributeSetBase.h"
 #include "CharacterBase.generated.h"
 
+class UAbilitySystemComponent;
+class UAttributeSetBase;
+class USKGameplayAbility;
+class UGameplayEffect;
+
 UCLASS()
-class SPACEVIKINGS_API ACharacterBase : public ACharacter
+class SPACEVIKINGS_API ACharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -45,6 +48,12 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	/**
+	 * Called when this Pawn is possessed. Only called on the server (or in standalone).
+	 * @param NewController The controller possessing this pawn
+	 */
+	virtual void PossessedBy(AController* NewController) override;
+
 	// Called to handle movements
 	UFUNCTION()
 	void MoveForward(float Value);
@@ -69,22 +78,43 @@ public:
 	FVector MuzzleOffset;
 
 protected:
-	/** If true we have initialized our abilities */
-	UPROPERTY()
-	int32 bAbilitiesInitialized;
+	/** List of attributes modified by the ability system */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UAttributeSetBase* AttributeSet;
+	/** The component used to handle ability system interactions */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UAbilitySystemComponent* AbilitySystemComponent;
+	/* Array to hold initial gameplay abilities*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay Ability")
+	TArray<TSubclassOf<USKGameplayAbility>> InitialGameplayAbilities;
+
+	/* Array to hold initial gameplay effects*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay Ability")
+	TArray<TSubclassOf<UGameplayEffect>> InitialGameplayEffects;
+
+	/* Keep track if abilites granted only once during initialization*/
+	bool bIsCharacterAbilitiesGranted = false;
+
+	/* Keep track if effects granted only once during initialization*/
+	bool bIsCharacterEffectsGranted = false;
+
+	/* Keep track if abilities are bound to input*/
+	bool bIsInputBound = false;
+
+	void AddInitialCharacterAbilities();
+
+	void AddInitialCharacterEffects();
+
+	void SetupAbilitiesInputs();
+
+	/** Returns the ability system component to use for this actor. It may live on another actor, such as a Pawn using the PlayerState's component */
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {
+		return AbilitySystemComponent;
+	};
 
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AProjectileBase> ProjectileClass;
-
-	/** The component used to handle ability system interactions */
-	//UPROPERTY()
-	//USKAbilitySystemComponent* AbilitySystemComponent;
-
-	/** List of attributes modified by the ability system */
-	UPROPERTY()
-	UAttributeSetBase* AttributeSet;
-
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -98,8 +128,8 @@ protected:
 	 * @param InstigatorCharacter The character that initiated this damage
 	 * @param DamageCauser The actual actor that did the damage, might be a weapon or projectile
 	 */
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnDamaged(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorCharacter, AActor* DamageCauser);
+	//UFUNCTION(BlueprintImplementableEvent)
+	//void OnDamaged(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorCharacter, AActor* DamageCauser);
 
 	/**
 	 * Called when health is changed, either from healing or from being damaged
@@ -108,8 +138,8 @@ protected:
 	 * @param DeltaValue Change in health value, positive for heal, negative for cost. If 0 the delta is unknown
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+	//UFUNCTION(BlueprintImplementableEvent)
+	//void OnHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
 	/**
 	 * Called when mana is changed, either from healing or from being used as a cost
@@ -117,8 +147,8 @@ protected:
 	 * @param DeltaValue Change in mana value, positive for heal, negative for cost. If 0 the delta is unknown
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+	//UFUNCTION(BlueprintImplementableEvent)
+	//void OnManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
 	/**
 	 * Called when movement speed is changed
@@ -126,14 +156,14 @@ protected:
 	 * @param DeltaValue Change in move speed
 	 * @param EventTags The gameplay tags of the event that changed mana
 	 */
-	UFUNCTION(BlueprintImplementableEvent)
-	void OnMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+	//UFUNCTION(BlueprintImplementableEvent)
+	//void OnMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
 	// Called from AttributeSetBase, these call BP events above
-	virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorCharacter, AActor* DamageCauser);
-	virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-	virtual void HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-	virtual void HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+	//virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorCharacter, AActor* DamageCauser);
+	//virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+	//virtual void HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
+	//virtual void HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
 
 	// Friended to allow access to handle functions above
 	friend UAttributeSetBase;
