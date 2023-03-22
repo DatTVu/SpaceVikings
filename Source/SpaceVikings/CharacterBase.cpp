@@ -7,6 +7,7 @@
 #include "AttributeSetBase.h"
 #include "SKGameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include <SpaceVikings/SKPlayerController.h>
 
 // Sets default values
 ACharacterBase::ACharacterBase()
@@ -30,6 +31,40 @@ void ACharacterBase::BeginPlay()
 	Super::BeginPlay();
 }
 
+
+void ACharacterBase::OnManaChanged(const FOnAttributeChangeData& Data)
+{
+	if (Data.NewValue <= 0){
+		ApplyExhaustionEffect();
+	}
+
+	ASKPlayerController* CharacterController = Cast<ASKPlayerController>(GetController());
+	if (IsValid(CharacterController) && IsValid(AttributeSet)) {
+		CharacterController->BP_OnManaChanged(Data.NewValue, AttributeSet->GetMaxMana());
+	}
+}
+
+void ACharacterBase::ApplyExhaustionEffect()
+{
+	if (!IsValid(AbilitySystemComponent) || !IsValid(ExhaustionEffectClass)) {
+		return;
+	}
+
+	ASKPlayerController* CharacterController = Cast<ASKPlayerController>(GetController());
+	if (IsValid(CharacterController)) {
+		CharacterController->BP_OnExhaustion();
+	}
+
+	FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(this);
+
+	const FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(ExhaustionEffectClass, 1.0f, EffectContextHandle);
+	if (CurrentGameplayEffectSpecHandle.IsValid()) {
+		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), AbilitySystemComponent);
+	}
+
+}
+
 // Called every frame
 void ACharacterBase::Tick(float DeltaTime)
 {
@@ -49,6 +84,7 @@ void ACharacterBase::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	if ( AbilitySystemComponent && AttributeSet) {
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ACharacterBase::OnManaChanged);
 		AddInitialCharacterAbilities();
 		AddInitialCharacterEffects();
 	}
@@ -171,39 +207,6 @@ void ACharacterBase::Fire() {
 #pragma endregion Actions
 
 #pragma region AttributeSet
-/*void ACharacterBase::HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorPawn, AActor* DamageCauser)
-{
-	OnDamaged(DamageAmount, HitInfo, DamageTags, InstigatorPawn, DamageCauser);
-}
-
-void ACharacterBase::HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
-{
-	// We only call the BP callback if this is not the initial ability setup
-	//if (bAbilitiesInitialized)
-	//{
-		OnHealthChanged(DeltaValue, EventTags);
-	//}
-}
-
-void ACharacterBase::HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
-{
-	//if (bAbilitiesInitialized)
-	//{
-		OnManaChanged(DeltaValue, EventTags);
-	//}
-}
-
-void ACharacterBase::HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags)
-{
-	// Update the character movement's walk speed
-	GetCharacterMovement()->MaxWalkSpeed = GetMoveSpeed();
-
-	//if (bAbilitiesInitialized)
-	//{
-		OnMoveSpeedChanged(DeltaValue, EventTags);
-	//}
-}
-*/
 float ACharacterBase::GetHealth() const
 {
 	if (!AttributeSet)

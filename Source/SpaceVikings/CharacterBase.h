@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
+#include "GameplayEffectTypes.h"
 #include "CharacterBase.generated.h"
 
 class UAbilitySystemComponent;
@@ -92,6 +93,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay Ability")
 	TArray<TSubclassOf<UGameplayEffect>> InitialGameplayEffects;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay Ability")
+	TSubclassOf<UGameplayEffect> ExhaustionEffectClass;
+
 	/* Keep track if abilites granted only once during initialization*/
 	bool bIsCharacterAbilitiesGranted = false;
 
@@ -112,6 +116,11 @@ protected:
 		return AbilitySystemComponent;
 	};
 
+	void OnManaChanged(const FOnAttributeChangeData& Data);
+
+	//Apply exhaustion effect after character is out of stamina
+	void ApplyExhaustionEffect();
+
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	TSubclassOf<class AProjectileBase> ProjectileClass;
@@ -119,52 +128,5 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	
-	/**
-	 * Called when character takes damage, which may have killed them
-	 *
-	 * @param DamageAmount Amount of damage that was done, not clamped based on current health
-	 * @param HitInfo The hit info that generated this damage
-	 * @param DamageTags The gameplay tags of the event that did the damage
-	 * @param InstigatorCharacter The character that initiated this damage
-	 * @param DamageCauser The actual actor that did the damage, might be a weapon or projectile
-	 */
-	//UFUNCTION(BlueprintImplementableEvent)
-	//void OnDamaged(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorCharacter, AActor* DamageCauser);
-
-	/**
-	 * Called when health is changed, either from healing or from being damaged
-	 * For damage this is called in addition to OnDamaged/OnKilled
-	 *
-	 * @param DeltaValue Change in health value, positive for heal, negative for cost. If 0 the delta is unknown
-	 * @param EventTags The gameplay tags of the event that changed mana
-	 */
-	//UFUNCTION(BlueprintImplementableEvent)
-	//void OnHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-
-	/**
-	 * Called when mana is changed, either from healing or from being used as a cost
-	 *
-	 * @param DeltaValue Change in mana value, positive for heal, negative for cost. If 0 the delta is unknown
-	 * @param EventTags The gameplay tags of the event that changed mana
-	 */
-	//UFUNCTION(BlueprintImplementableEvent)
-	//void OnManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-
-	/**
-	 * Called when movement speed is changed
-	 *
-	 * @param DeltaValue Change in move speed
-	 * @param EventTags The gameplay tags of the event that changed mana
-	 */
-	//UFUNCTION(BlueprintImplementableEvent)
-	//void OnMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-
-	// Called from AttributeSetBase, these call BP events above
-	//virtual void HandleDamage(float DamageAmount, const FHitResult& HitInfo, const struct FGameplayTagContainer& DamageTags, ACharacterBase* InstigatorCharacter, AActor* DamageCauser);
-	//virtual void HandleHealthChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-	//virtual void HandleManaChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-	//virtual void HandleMoveSpeedChanged(float DeltaValue, const struct FGameplayTagContainer& EventTags);
-
-	// Friended to allow access to handle functions above
 	friend UAttributeSetBase;
 };
