@@ -2,48 +2,49 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "../SpaceVikings.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "ProjectileBase.generated.h"
+#include "SKProjectileBase.generated.h"
 
 UCLASS()
-class SPACEVIKINGS_API AProjectileBase : public AActor
+class SPACEVIKINGS_API ASKProjectileBase : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
-	AProjectileBase();
+	ASKProjectileBase();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Function that is called when the projectile hits something.
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+		void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 
 	// Sphere collision component.
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
-	USphereComponent* CollisionComponent;
+		USphereComponent* CollisionComponent;
 
 	// Projectile movement component
 	UPROPERTY(VisibleAnywhere, Category = Movement)
-	UProjectileMovementComponent* ProjectileMovementComponent;
+		UProjectileMovementComponent* ProjectileMovementComponent;
 
 	// Projectile mesh
 	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
-	UStaticMeshComponent* ProjectileMeshComponent;
+		UStaticMeshComponent* ProjectileMeshComponent;
 
 	// Projectile material
 	UPROPERTY(VisibleDefaultsOnly, Category = Movement)
-	UMaterialInstanceDynamic* ProjectileMaterialInstance;
-	
+		UMaterialInstanceDynamic* ProjectileMaterialInstance;
+
 	//Function to initialize the projectile's velocity in the shoot direction
 	void FireInDirection(const FVector& shootDirection);
+
 };

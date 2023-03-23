@@ -1,40 +1,42 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "CharacterBase.h"
-#include "ProjectileBase.h"
+
+#include "SKCharacterBase.h"
+
+#include "../Weapons/SKProjectileBase.h"
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemComponent.h"
-#include "AttributeSetBase.h"
-#include "SKGameplayAbility.h"
+#include "../Abilities/SKAttributeSetBase.h"
+#include "../Abilities/SKGameplayAbility.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include <SpaceVikings/SKPlayerController.h>
 
 // Sets default values
-ACharacterBase::ACharacterBase()
+ASKCharacterBase::ASKCharacterBase()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = false;
 	// Create ability system component, and set it to be explicitly replicated
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	// Create the attribute set, this replicates by default
-	AttributeSet = CreateDefaultSubobject<UAttributeSetBase>(TEXT("AttributeSet"));
+	AttributeSet = CreateDefaultSubobject<USKAttributeSetBase>(TEXT("AttributeSet"));
 	bIsCharacterAbilitiesGranted = false;
 	bIsCharacterEffectsGranted = false;
 	bIsInputBound = false;
 }
 
 // Called when the game starts or when spawned
-void ACharacterBase::BeginPlay()
+void ASKCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
 
-void ACharacterBase::OnManaChanged(const FOnAttributeChangeData& Data)
+void ASKCharacterBase::OnManaChanged(const FOnAttributeChangeData& Data)
 {
-	if (Data.NewValue <= 0){
+	if (Data.NewValue <= 0) {
 		ApplyExhaustionEffect();
 	}
 
@@ -44,7 +46,7 @@ void ACharacterBase::OnManaChanged(const FOnAttributeChangeData& Data)
 	}
 }
 
-void ACharacterBase::ApplyExhaustionEffect()
+void ASKCharacterBase::ApplyExhaustionEffect()
 {
 	if (!IsValid(AbilitySystemComponent) || !IsValid(ExhaustionEffectClass)) {
 		return;
@@ -66,31 +68,31 @@ void ACharacterBase::ApplyExhaustionEffect()
 }
 
 // Called every frame
-void ACharacterBase::Tick(float DeltaTime)
+void ASKCharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
 
 // Called to bind functionality to input
-void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ASKCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	SetupAbilitiesInputs();
 }
 
-void ACharacterBase::PossessedBy(AController* NewController)
+void ASKCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	if ( AbilitySystemComponent && AttributeSet) {
+	if (AbilitySystemComponent && AttributeSet) {
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ACharacterBase::OnManaChanged);
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ASKCharacterBase::OnManaChanged);
 		AddInitialCharacterAbilities();
 		AddInitialCharacterEffects();
 	}
 }
 
-void ACharacterBase::AddInitialCharacterAbilities() {
+void ASKCharacterBase::AddInitialCharacterAbilities() {
 	if (!AbilitySystemComponent || bIsCharacterAbilitiesGranted) {
 		return;
 	}
@@ -102,12 +104,12 @@ void ACharacterBase::AddInitialCharacterAbilities() {
 				FGameplayAbilitySpec AbilitySpec(CurrentAbility, 1, static_cast<int32>(CurrentAbility->AbilityInputID), this);
 				AbilitySystemComponent->GiveAbility(AbilitySpec);
 			}
-		}
+	}
 	}
 	bIsCharacterAbilitiesGranted = true;
 }
 
-void ACharacterBase::AddInitialCharacterEffects() {
+void ASKCharacterBase::AddInitialCharacterEffects() {
 	if (!AbilitySystemComponent || bIsCharacterEffectsGranted) {
 		return;
 	}
@@ -127,8 +129,8 @@ void ACharacterBase::AddInitialCharacterEffects() {
 	bIsCharacterAbilitiesGranted = true;
 }
 
-void ACharacterBase::SetupAbilitiesInputs() {
-	if (!AbilitySystemComponent || !InputComponent|| bIsInputBound) {
+void ASKCharacterBase::SetupAbilitiesInputs() {
+	if (!AbilitySystemComponent || !InputComponent || bIsInputBound) {
 		return;
 	}
 
@@ -147,29 +149,29 @@ void ACharacterBase::SetupAbilitiesInputs() {
 
 #pragma region Movements
 
-void ACharacterBase::MoveForward(float Value) {
+void ASKCharacterBase::MoveForward(float Value) {
 	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::X);
 	AddMovementInput(direction, Value);
 }
 
-void ACharacterBase::MoveRight(float Value) {
+void ASKCharacterBase::MoveRight(float Value) {
 	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::Y);
 	AddMovementInput(direction, Value);
 }
 
-void ACharacterBase::StartJump()
+void ASKCharacterBase::StartJump()
 {
 	bPressedJump = true;
 }
 
-void ACharacterBase::StopJump()
+void ASKCharacterBase::StopJump()
 {
 	bPressedJump = false;
 }
 #pragma endregion Movements
 
 #pragma region Actions
-void ACharacterBase::Fire() {
+void ASKCharacterBase::Fire() {
 	if (ProjectileClass) {
 		//Get camera transform
 		FVector CameraLocation;
@@ -195,7 +197,7 @@ void ACharacterBase::Fire() {
 			SpawnParams.Instigator = GetInstigator();
 
 			//Spawn the projectile at the muzzle
-			AProjectileBase* Projectile = World->SpawnActor<AProjectileBase>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+			ASKProjectileBase* Projectile = World->SpawnActor<ASKProjectileBase>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
 			if (Projectile) {
 				//Set the projectile's initial trajectory
 				FVector LaunchDirection = MuzzleRotation.Vector();
@@ -207,7 +209,7 @@ void ACharacterBase::Fire() {
 #pragma endregion Actions
 
 #pragma region AttributeSet
-float ACharacterBase::GetHealth() const
+float ASKCharacterBase::GetHealth() const
 {
 	if (!AttributeSet)
 		return 1.f;
@@ -215,22 +217,22 @@ float ACharacterBase::GetHealth() const
 	return AttributeSet->GetHealth();
 }
 
-float ACharacterBase::GetMaxHealth() const
+float ASKCharacterBase::GetMaxHealth() const
 {
 	return AttributeSet->GetMaxHealth();
 }
 
-float ACharacterBase::GetMana() const
+float ASKCharacterBase::GetMana() const
 {
 	return AttributeSet->GetMana();
 }
 
-float ACharacterBase::GetMaxMana() const
+float ASKCharacterBase::GetMaxMana() const
 {
 	return AttributeSet->GetMaxMana();
 }
 
-float ACharacterBase::GetMoveSpeed() const
+float ASKCharacterBase::GetMoveSpeed() const
 {
 	return AttributeSet->GetMoveSpeed();
 }

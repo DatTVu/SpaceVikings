@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AttributeSetBase.h"
-#include "CharacterBase.h"
+#include "SKAttributeSetBase.h"
+#include "../Characters/SKCharacterBase.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectExtension.h"
 
-UAttributeSetBase::UAttributeSetBase()
+USKAttributeSetBase::USKAttributeSetBase()
 	: Health(100.f)
 	, MaxHealth(100.f)
 	, Mana(100.f)
@@ -18,55 +18,55 @@ UAttributeSetBase::UAttributeSetBase()
 {
 }
 
-void UAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void USKAttributeSetBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UAttributeSetBase, Health);
-	DOREPLIFETIME(UAttributeSetBase, MaxHealth);
-	DOREPLIFETIME(UAttributeSetBase, Mana);
-	DOREPLIFETIME(UAttributeSetBase, MaxMana);
-	DOREPLIFETIME(UAttributeSetBase, AttackPower);
-	DOREPLIFETIME(UAttributeSetBase, DefensePower);
-	DOREPLIFETIME(UAttributeSetBase, MoveSpeed);
+	DOREPLIFETIME(USKAttributeSetBase, Health);
+	DOREPLIFETIME(USKAttributeSetBase, MaxHealth);
+	DOREPLIFETIME(USKAttributeSetBase, Mana);
+	DOREPLIFETIME(USKAttributeSetBase, MaxMana);
+	DOREPLIFETIME(USKAttributeSetBase, AttackPower);
+	DOREPLIFETIME(USKAttributeSetBase, DefensePower);
+	DOREPLIFETIME(USKAttributeSetBase, MoveSpeed);
 }
 
-void UAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldValue)
+void USKAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetBase, Health, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USKAttributeSetBase, Health, OldValue);
 }
 
-void UAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
+void USKAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetBase, MaxHealth, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USKAttributeSetBase, MaxHealth, OldValue);
 }
 
-void UAttributeSetBase::OnRep_Mana(const FGameplayAttributeData& OldValue)
+void USKAttributeSetBase::OnRep_Mana(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetBase, Mana, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USKAttributeSetBase, Mana, OldValue);
 }
 
-void UAttributeSetBase::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
+void USKAttributeSetBase::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetBase, MaxMana, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USKAttributeSetBase, MaxMana, OldValue);
 }
 
-void UAttributeSetBase::OnRep_AttackPower(const FGameplayAttributeData& OldValue)
+void USKAttributeSetBase::OnRep_AttackPower(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetBase, AttackPower, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USKAttributeSetBase, AttackPower, OldValue);
 }
 
-void UAttributeSetBase::OnRep_DefensePower(const FGameplayAttributeData& OldValue)
+void USKAttributeSetBase::OnRep_DefensePower(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetBase, DefensePower, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USKAttributeSetBase, DefensePower, OldValue);
 }
 
-void UAttributeSetBase::OnRep_MoveSpeed(const FGameplayAttributeData& OldValue)
+void USKAttributeSetBase::OnRep_MoveSpeed(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UAttributeSetBase, MoveSpeed, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(USKAttributeSetBase, MoveSpeed, OldValue);
 }
 
-void UAttributeSetBase::AdjustAttributeForMaxChange(FGameplayAttributeData& AffectedAttribute, const FGameplayAttributeData& MaxAttribute, float NewMaxValue, const FGameplayAttribute& AffectedAttributeProperty)
+void USKAttributeSetBase::AdjustAttributeForMaxChange(FGameplayAttributeData& AffectedAttribute, const FGameplayAttributeData& MaxAttribute, float NewMaxValue, const FGameplayAttribute& AffectedAttributeProperty)
 {
 	UAbilitySystemComponent* AbilityComp = GetOwningAbilitySystemComponent();
 	const float CurrentMaxValue = MaxAttribute.GetCurrentValue();
@@ -80,7 +80,7 @@ void UAttributeSetBase::AdjustAttributeForMaxChange(FGameplayAttributeData& Affe
 	}
 }
 
-void UAttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+void USKAttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	// This is called whenever attributes change, so for max health/mana we want to scale the current totals to match
 	Super::PreAttributeChange(Attribute, NewValue);
@@ -95,7 +95,7 @@ void UAttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribute, 
 	}
 }
 
-void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+void USKAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 
@@ -114,12 +114,12 @@ void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallba
 	// Get the Target actor, which should be our owner
 	AActor* TargetActor = nullptr;
 	AController* TargetController = nullptr;
-	ACharacterBase* TargetCharacter = nullptr;
+	ASKCharacterBase* TargetCharacter = nullptr;
 	if (Data.Target.AbilityActorInfo.IsValid() && Data.Target.AbilityActorInfo->AvatarActor.IsValid())
 	{
 		TargetActor = Data.Target.AbilityActorInfo->AvatarActor.Get();
 		TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
-		TargetCharacter = Cast<ACharacterBase>(TargetActor);
+		TargetCharacter = Cast<ASKCharacterBase>(TargetActor);
 	}
 
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
@@ -127,7 +127,7 @@ void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallba
 		// Get the Source actor
 		AActor* SourceActor = nullptr;
 		AController* SourceController = nullptr;
-		ACharacterBase* SourceCharacter = nullptr;
+		ASKCharacterBase* SourceCharacter = nullptr;
 		if (Source && Source->AbilityActorInfo.IsValid() && Source->AbilityActorInfo->AvatarActor.IsValid())
 		{
 			SourceActor = Source->AbilityActorInfo->AvatarActor.Get();
@@ -143,11 +143,11 @@ void UAttributeSetBase::PostGameplayEffectExecute(const FGameplayEffectModCallba
 			// Use the controller to find the source pawn
 			if (SourceController)
 			{
-				SourceCharacter = Cast<ACharacterBase>(SourceController->GetPawn());
+				SourceCharacter = Cast<ASKCharacterBase>(SourceController->GetPawn());
 			}
 			else
 			{
-				SourceCharacter = Cast<ACharacterBase>(SourceActor);
+				SourceCharacter = Cast<ASKCharacterBase>(SourceActor);
 			}
 
 			// Set the causer actor based on context if it's set

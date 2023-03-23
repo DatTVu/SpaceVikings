@@ -2,17 +2,17 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
-#include "CharacterBase.h"
-#include "PlayerCharacter.generated.h"
+#include "../SpaceVikings.h"
+#include "SKCharacterBase.h"
+#include "SKPlayerCharacter.generated.h"
 
 UCLASS()
-class SPACEVIKINGS_API APlayerCharacter : public ACharacterBase
+class SPACEVIKINGS_API ASKPlayerCharacter : public ASKCharacterBase
 {
 	GENERATED_BODY()
 public:
 	// Sets default values for this character's properties
-	APlayerCharacter();
+	ASKPlayerCharacter();
 
 private:
 	//TO-DO: refactore this enum. now it needs to declare infront of TArray
@@ -34,31 +34,33 @@ private:
 		WE = 18,
 		EE = 22
 	};
-	TArray<EOrb> m_vecOrbCombination;
-	int m_currentOrbSlot = 0;
-	const int m_maxOrbCnt = 2;
+	TArray<EOrb> VecOrbCombination;
+	int CurrentOrbSlot = 0;
+	const int MaxOrbCnt = 2;
 	FORCEINLINE void HanddleOrb(const EOrb eVal);
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	// TopDown camera.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
-	class USpringArmComponent* m_CameraBoom;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Camera)
-	class UCameraComponent* m_FollowTopDownCamera;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
+		class USpringArmComponent* CameraBoom;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
+		class UCameraComponent* FollowTopDownCamera;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StaticMesh")
+		class UStaticMeshComponent* StaticMeshComponent;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	UFUNCTION()
-	void HandleQuasPressed();
+		void HandleQuasPressed();
 	UFUNCTION()
-	void HandleWexPressed();
+		void HandleWexPressed();
 	UFUNCTION()
-	void HandleExortPressed();
+		void HandleExortPressed();
 	UFUNCTION()
-	void HandleInvorkPressed();
+		void HandleInvorkPressed();
 };
