@@ -28,42 +28,42 @@ public:
 
 	/** Current Health, when 0 we expect owner to die. Capped by MaxHealth */
 	UPROPERTY(BlueprintReadOnly, Category = "Health", ReplicatedUsing = OnRep_Health)
-		FGameplayAttributeData Health;
+	FGameplayAttributeData Health;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, Health)
 
-		/** MaxHealth is its own attribute, since GameplayEffects may modify it */
-		UPROPERTY(BlueprintReadOnly, Category = "Health", ReplicatedUsing = OnRep_MaxHealth)
-		FGameplayAttributeData MaxHealth;
+	/** MaxHealth is its own attribute, since GameplayEffects may modify it */
+	UPROPERTY(BlueprintReadOnly, Category = "Health", ReplicatedUsing = OnRep_MaxHealth)
+	FGameplayAttributeData MaxHealth;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, MaxHealth)
 
-		/** Current Mana, used to execute special abilities. Capped by MaxMana */
-		UPROPERTY(BlueprintReadOnly, Category = "Mana", ReplicatedUsing = OnRep_Mana)
-		FGameplayAttributeData Mana;
+	/** Current Mana, used to execute special abilities. Capped by MaxMana */
+	UPROPERTY(BlueprintReadOnly, Category = "Mana", ReplicatedUsing = OnRep_Mana)
+	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, Mana)
 
-		/** MaxMana is its own attribute, since GameplayEffects may modify it */
-		UPROPERTY(BlueprintReadOnly, Category = "Mana", ReplicatedUsing = OnRep_MaxMana)
-		FGameplayAttributeData MaxMana;
+	/** MaxMana is its own attribute, since GameplayEffects may modify it */
+	UPROPERTY(BlueprintReadOnly, Category = "Mana", ReplicatedUsing = OnRep_MaxMana)
+	FGameplayAttributeData MaxMana;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, MaxMana)
 
-		/** AttackPower of the attacker is multiplied by the base Damage to reduce health, so 1.0 means no bonus */
-		UPROPERTY(BlueprintReadOnly, Category = "Damage", ReplicatedUsing = OnRep_AttackPower)
-		FGameplayAttributeData AttackPower;
+	/** AttackPower of the attacker is multiplied by the base Damage to reduce health, so 1.0 means no bonus */
+	UPROPERTY(BlueprintReadOnly, Category = "Damage", ReplicatedUsing = OnRep_AttackPower)
+	FGameplayAttributeData AttackPower;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, AttackPower)
 
-		/** Base Damage is divided by DefensePower to get actual damage done, so 1.0 means no bonus */
-		UPROPERTY(BlueprintReadOnly, Category = "Damage", ReplicatedUsing = OnRep_DefensePower)
-		FGameplayAttributeData DefensePower;
+	/** Base Damage is divided by DefensePower to get actual damage done, so 1.0 means no bonus */
+	UPROPERTY(BlueprintReadOnly, Category = "Damage", ReplicatedUsing = OnRep_DefensePower)
+	FGameplayAttributeData DefensePower;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, DefensePower)
 
-		/** MoveSpeed affects how fast characters can move */
-		UPROPERTY(BlueprintReadOnly, Category = "MoveSpeed", ReplicatedUsing = OnRep_MoveSpeed)
-		FGameplayAttributeData MoveSpeed;
+	/** MoveSpeed affects how fast characters can move */
+	UPROPERTY(BlueprintReadOnly, Category = "MoveSpeed", ReplicatedUsing = OnRep_MoveSpeed)
+	FGameplayAttributeData MoveSpeed;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, MoveSpeed)
 
-		/** Damage is a 'temporary' attribute used by the DamageExecution to calculate final damage, which then turns into -Health */
-		UPROPERTY(BlueprintReadOnly, Category = "Damage")
-		FGameplayAttributeData Damage;
+	/** Damage is a 'temporary' attribute used by the DamageExecution to calculate final damage, which then turns into -Health */
+	UPROPERTY(BlueprintReadOnly, Category = "Damage")
+	FGameplayAttributeData Damage;
 	ATTRIBUTE_ACCESSORS(USKAttributeSetBase, Damage)
 
 protected:
@@ -72,25 +72,25 @@ protected:
 
 	// These OnRep functions exist to make sure that the ability system internal representations are synchronized properly during replication
 	UFUNCTION()
-		virtual void OnRep_Health(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_Health(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_Mana(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_Mana(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_MaxMana(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_MaxMana(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_AttackPower(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_AttackPower(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_DefensePower(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_DefensePower(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
-		virtual void OnRep_MoveSpeed(const FGameplayAttributeData& OldValue);
+	virtual void OnRep_MoveSpeed(const FGameplayAttributeData& OldValue);
 
 	
 };

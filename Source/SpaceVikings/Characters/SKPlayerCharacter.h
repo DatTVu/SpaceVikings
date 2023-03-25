@@ -46,8 +46,7 @@ protected:
 		class USpringArmComponent* CameraBoom;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 		class UCameraComponent* FollowTopDownCamera;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StaticMesh")
-		class UStaticMeshComponent* StaticMeshComponent;
+	
 
 public:
 	// Called every frame

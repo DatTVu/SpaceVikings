@@ -8,9 +8,10 @@
 #include "GameFramework/Character.h"
 #include "GameplayEffectTypes.h"
 #include "GameFramework/Character.h"
+#include "../Abilities/SKAbilitySystemComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "SKCharacterBase.generated.h"
 
-class UAbilitySystemComponent;
 class USKAttributeSetBase;
 class USKGameplayAbility;
 class UGameplayEffect;
@@ -23,6 +24,12 @@ class SPACEVIKINGS_API ASKCharacterBase : public ACharacter, public IAbilitySyst
 public:
 	// Sets default values for this character's properties
 	ASKCharacterBase();
+
+	/* Returns the ability system component to use for this actor.
+	It may live on another actor, such as a Pawn using the PlayerState's component */
+	UAbilitySystemComponent* GetAbilitySystemComponent() const override {
+		return SKAbilitySystemComponent;
+	};
 
 	/** Returns current health, will be 0 if dead */
 	UFUNCTION(BlueprintCallable)
@@ -80,12 +87,14 @@ public:
 		FVector MuzzleOffset;
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StaticMesh")
+	class UStaticMeshComponent* StaticMeshComponent;
 	/** List of attributes modified by the ability system */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		USKAttributeSetBase* AttributeSet;
 	/** The component used to handle ability system interactions */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-		UAbilitySystemComponent* AbilitySystemComponent;
+		USKAbilitySystemComponent* SKAbilitySystemComponent;
 	/* Array to hold initial gameplay abilities*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Gameplay Ability")
 		TArray<TSubclassOf<USKGameplayAbility>> InitialGameplayAbilities;
@@ -111,12 +120,6 @@ protected:
 	void AddInitialCharacterEffects();
 
 	void SetupAbilitiesInputs();
-
-	/* Returns the ability system component to use for this actor.
-	It may live on another actor, such as a Pawn using the PlayerState's component */
-	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override {
-		return AbilitySystemComponent;
-	};
 
 	void OnManaChanged(const FOnAttributeChangeData& Data);
 

@@ -8,6 +8,7 @@
 #include "AbilitySystemComponent.h"
 #include "../Abilities/SKAttributeSetBase.h"
 #include "../Abilities/SKGameplayAbility.h"
+#include "../Abilities/SKAbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include <SpaceVikings/SKPlayerController.h>
 
@@ -17,9 +18,9 @@ ASKCharacterBase::ASKCharacterBase()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	// Create ability system component, and set it to be explicitly replicated
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
-	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
+	SKAbilitySystemComponent = CreateDefaultSubobject<USKAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	SKAbilitySystemComponent->SetIsReplicated(true);
+	SKAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	// Create the attribute set, this replicates by default
 	AttributeSet = CreateDefaultSubobject<USKAttributeSetBase>(TEXT("AttributeSet"));
 	bIsCharacterAbilitiesGranted = false;
@@ -48,7 +49,7 @@ void ASKCharacterBase::OnManaChanged(const FOnAttributeChangeData& Data)
 
 void ASKCharacterBase::ApplyExhaustionEffect()
 {
-	if (!IsValid(AbilitySystemComponent) || !IsValid(ExhaustionEffectClass)) {
+	if (!SKAbilitySystemComponent || !IsValid(ExhaustionEffectClass)) {
 		return;
 	}
 
@@ -57,12 +58,12 @@ void ASKCharacterBase::ApplyExhaustionEffect()
 		CharacterController->BP_OnExhaustion();
 	}
 
-	FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
+	FGameplayEffectContextHandle EffectContextHandle = SKAbilitySystemComponent->MakeEffectContext();
 	EffectContextHandle.AddSourceObject(this);
 
-	const FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(ExhaustionEffectClass, 1.0f, EffectContextHandle);
+	const FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = SKAbilitySystemComponent->MakeOutgoingSpec(ExhaustionEffectClass, 1.0f, EffectContextHandle);
 	if (CurrentGameplayEffectSpecHandle.IsValid()) {
-		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), AbilitySystemComponent);
+		SKAbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), SKAbilitySystemComponent);
 	}
 
 }
@@ -84,45 +85,47 @@ void ASKCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 void ASKCharacterBase::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	if (AbilitySystemComponent && AttributeSet) {
-		AbilitySystemComponent->InitAbilityActorInfo(this, this);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ASKCharacterBase::OnManaChanged);
+	if (IsValid(SKAbilitySystemComponent) && AttributeSet) {
+		SKAbilitySystemComponent->InitAbilityActorInfo(this, this);
+		//AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ASKCharacterBase::OnManaChanged);
 		AddInitialCharacterAbilities();
-		AddInitialCharacterEffects();
+		//AddInitialCharacterEffects();
 	}
 }
 
 void ASKCharacterBase::AddInitialCharacterAbilities() {
-	if (!AbilitySystemComponent || bIsCharacterAbilitiesGranted) {
+	if (!SKAbilitySystemComponent || bIsCharacterAbilitiesGranted) {
 		return;
 	}
 
-	for (TSubclassOf<USKGameplayAbility> CurrentGameplayAbilityClass : InitialGameplayAbilities) {
+	// Grant abilities:
+	for (TSubclassOf<USKGameplayAbility> CurrentGameplayAbilityClass : InitialGameplayAbilities)
+	{
 		if (IsValid(CurrentGameplayAbilityClass)) {
 			USKGameplayAbility* CurrentAbility = CurrentGameplayAbilityClass->GetDefaultObject<USKGameplayAbility>();
 			if (IsValid(CurrentAbility)) {
 				FGameplayAbilitySpec AbilitySpec(CurrentAbility, 1, static_cast<int32>(CurrentAbility->AbilityInputID), this);
-				AbilitySystemComponent->GiveAbility(AbilitySpec);
+				SKAbilitySystemComponent->GiveAbility(AbilitySpec);
 			}
-	}
+		}
 	}
 	bIsCharacterAbilitiesGranted = true;
 }
 
 void ASKCharacterBase::AddInitialCharacterEffects() {
-	if (!AbilitySystemComponent || bIsCharacterEffectsGranted) {
+	if (!SKAbilitySystemComponent || bIsCharacterEffectsGranted) {
 		return;
 	}
 
-	FGameplayEffectContextHandle EffectContextHandle = AbilitySystemComponent->MakeEffectContext();
+	FGameplayEffectContextHandle EffectContextHandle = SKAbilitySystemComponent->MakeEffectContext();
 	EffectContextHandle.AddSourceObject(this);
 
 	for (TSubclassOf<UGameplayEffect> CurrentGameplayEffectClass : InitialGameplayEffects) {
 		if (IsValid(CurrentGameplayEffectClass)) {
-			FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(CurrentGameplayEffectClass, 1.0f, EffectContextHandle);
+			FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = SKAbilitySystemComponent->MakeOutgoingSpec(CurrentGameplayEffectClass, 1.0f, EffectContextHandle);
 			if (CurrentGameplayEffectSpecHandle.IsValid()) {
 				//FActiveGameplayEffectHandle ActiveGameplayEffectHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), AbilitySystemComponent);
-				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), AbilitySystemComponent);
+				SKAbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), SKAbilitySystemComponent);
 			}
 		}
 	}
@@ -130,11 +133,11 @@ void ASKCharacterBase::AddInitialCharacterEffects() {
 }
 
 void ASKCharacterBase::SetupAbilitiesInputs() {
-	if (!AbilitySystemComponent || !InputComponent || bIsInputBound) {
+	if (!SKAbilitySystemComponent || !InputComponent || bIsInputBound) {
 		return;
 	}
 
-	AbilitySystemComponent->BindAbilityActivationToInputComponent(
+	SKAbilitySystemComponent->BindAbilityActivationToInputComponent(
 		InputComponent,
 		FGameplayAbilityInputBinds(
 			"Confirm",
@@ -186,9 +189,9 @@ void ASKCharacterBase::Fire() {
 		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
 
 		//Skew the aim the be slightly upwards
-		FRotator MuzzleRotation = CameraRotation;
+		//FRotator MuzzleRotation = CameraRotation;
 		//TO-DO: remove magic number here
-		MuzzleRotation.Pitch += 10.0f;
+		//MuzzleRotation.Pitch += 10.0f;
 
 		UWorld* World = GetWorld();
 		if (World) {
@@ -197,10 +200,10 @@ void ASKCharacterBase::Fire() {
 			SpawnParams.Instigator = GetInstigator();
 
 			//Spawn the projectile at the muzzle
-			ASKProjectileBase* Projectile = World->SpawnActor<ASKProjectileBase>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+			ASKProjectileBase* Projectile = World->SpawnActor<ASKProjectileBase>(ProjectileClass, MuzzleLocation, CameraRotation, SpawnParams);
 			if (Projectile) {
 				//Set the projectile's initial trajectory
-				FVector LaunchDirection = MuzzleRotation.Vector();
+				FVector LaunchDirection = CameraRotation.Vector();
 				Projectile->FireInDirection(LaunchDirection);
 			}
 		}

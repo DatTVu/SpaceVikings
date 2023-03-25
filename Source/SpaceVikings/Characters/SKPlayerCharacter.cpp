@@ -6,6 +6,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h" 
 #include "Components/StaticMeshComponent.h"
+#include "../Abilities/SKAbilitySystemComponent.h"
 #include "Engine/StaticMesh.h"
 
 static const FString PlayerMeshName = "/Game/Assets/LPSD2_Meshes/Pirate/SM_PirateShip_1.SM_PirateShip_1";
