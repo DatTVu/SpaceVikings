@@ -2,15 +2,15 @@
 
 
 #include "SKCharacterBase.h"
-
-#include "../Weapons/SKProjectileBase.h"
-#include "AbilitySystemGlobals.h"
-#include "AbilitySystemComponent.h"
 #include "../Abilities/SKAttributeSetBase.h"
 #include "../Abilities/SKGameplayAbility.h"
 #include "../Abilities/SKAbilitySystemComponent.h"
+#include "../SKPlayerController.h"
+#include "../Weapons/SKProjectilePool.h"
+#include "../Weapons/SKProjectileBase.h"
+#include "AbilitySystemGlobals.h"
+#include "AbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include <SpaceVikings/SKPlayerController.h>
 
 // Sets default values
 ASKCharacterBase::ASKCharacterBase()
@@ -23,6 +23,7 @@ ASKCharacterBase::ASKCharacterBase()
 	SKAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
 	// Create the attribute set, this replicates by default
 	AttributeSet = CreateDefaultSubobject<USKAttributeSetBase>(TEXT("AttributeSet"));
+	MyProjectilePool = CreateDefaultSubobject<USKProjectilePool>(TEXT("ProjectilePool"));
 	bIsCharacterAbilitiesGranted = false;
 	bIsCharacterEffectsGranted = false;
 	bIsInputBound = false;
@@ -89,7 +90,7 @@ void ASKCharacterBase::PossessedBy(AController* NewController)
 		SKAbilitySystemComponent->InitAbilityActorInfo(this, this);
 		//AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ASKCharacterBase::OnManaChanged);
 		AddInitialCharacterAbilities();
-		//AddInitialCharacterEffects();
+		AddInitialCharacterEffects();
 	}
 }
 
@@ -124,7 +125,6 @@ void ASKCharacterBase::AddInitialCharacterEffects() {
 		if (IsValid(CurrentGameplayEffectClass)) {
 			FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = SKAbilitySystemComponent->MakeOutgoingSpec(CurrentGameplayEffectClass, 1.0f, EffectContextHandle);
 			if (CurrentGameplayEffectSpecHandle.IsValid()) {
-				//FActiveGameplayEffectHandle ActiveGameplayEffectHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), AbilitySystemComponent);
 				SKAbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), SKAbilitySystemComponent);
 			}
 		}
@@ -175,7 +175,7 @@ void ASKCharacterBase::StopJump()
 
 #pragma region Actions
 void ASKCharacterBase::Fire() {
-	if (ProjectileClass) {
+	if (MyProjectilePool != nullptr) {
 		//Get camera transform
 		FVector CameraLocation;
 		FRotator CameraRotation;
@@ -193,19 +193,18 @@ void ASKCharacterBase::Fire() {
 		//TO-DO: remove magic number here
 		//MuzzleRotation.Pitch += 10.0f;
 
-		UWorld* World = GetWorld();
-		if (World) {
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = GetInstigator();
 
-			//Spawn the projectile at the muzzle
-			ASKProjectileBase* Projectile = World->SpawnActor<ASKProjectileBase>(ProjectileClass, MuzzleLocation, CameraRotation, SpawnParams);
-			if (Projectile) {
-				//Set the projectile's initial trajectory
-				FVector LaunchDirection = CameraRotation.Vector();
-				Projectile->FireInDirection(LaunchDirection);
-			}
+		//Spawn the projectile at the muzzle
+		ASKProjectileBase* Projectile = MyProjectilePool->SpawnPooledProjectile();
+		if (Projectile != nullptr) {
+			check(GEngine != nullptr);
+			// Display a debug message for five seconds. 
+			// The -1 "Key" value argument prevents the message from being updated or refreshed.
+			//FString IntAsString = FString::FromInt(Projectile->GetPoolIndex());
+			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, IntAsString);
+			Projectile->SetActorLocation(MuzzleLocation);
+			Projectile->SetInstigator(GetInstigator());
+			Projectile->FireInDirection(CameraRotation.Vector());
 		}
 	}
 }

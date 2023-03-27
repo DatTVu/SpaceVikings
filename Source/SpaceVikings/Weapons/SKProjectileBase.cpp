@@ -43,18 +43,18 @@ ASKProjectileBase::ASKProjectileBase()
 		if (Mesh.Succeeded()) {
 			ProjectileMeshComponent->SetStaticMesh(Mesh.Object);
 		}
-		static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("'/Game/Assets/SphereMaterial.SphereMaterial'"));
-		if (Material.Succeeded()) {
-			ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
-		}
+		//static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("'/Game/Assets/SphereMaterial.SphereMaterial'"));
+		//if (Material.Succeeded()) {
+		//	ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
+		//}
 		//TO-DO: remove magic number here
-		ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
+		//ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
 		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.1f, 0.1f, 0.1f));
 		ProjectileMeshComponent->SetupAttachment(RootComponent);
 	}
 
 	// Delete the projectile after 3 seconds.
-	InitialLifeSpan = 3.0f;
+	//InitialLifeSpan = 3.0f;
 }
 
 // Called when the game starts or when spawned
@@ -64,6 +64,7 @@ void ASKProjectileBase::BeginPlay()
 
 }
 
+
 // Called every frame
 void ASKProjectileBase::Tick(float DeltaTime)
 {
@@ -71,17 +72,46 @@ void ASKProjectileBase::Tick(float DeltaTime)
 }
 
 void ASKProjectileBase::FireInDirection(const FVector& ShootDirection) {
-	ProjectileMovementComponent->Velocity = ShootDirection * ProjectileMovementComponent->InitialSpeed;
+	ProjectileMovementComponent->Velocity = ShootDirection * 3000.0f;
 }
 
 // Function that is called when the projectile hits something.
 void ASKProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-	if (OtherActor != this && OtherComponent->IsSimulatingPhysics())
-	{
-		OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * 100.0f, Hit.ImpactPoint);
-	}
-
-	Destroy();
+	Deactivate();
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT!!!"));
+	//if (OtherActor != this && OtherComponent->IsSimulatingPhysics())
+	//{
+		//OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * 100.0f, Hit.ImpactPoint);
+	//}
+	//Destroy();
 }
 
+// Properties that enable the object to be pooled
+void ASKProjectileBase::SetActive(bool isActive) {
+	BIsActive = isActive;
+	SetActorHiddenInGame(!isActive);
+	GetWorldTimerManager().SetTimer(LifeSpanTimer, this, &ASKProjectileBase::Deactivate, ProjectileLifeSpan, false);
+}
+
+void ASKProjectileBase::SetLifeSpan(float lifeSpan) {
+	ProjectileLifeSpan = lifeSpan;
+}
+
+void ASKProjectileBase::SetPoolIndex(int idx) {
+	PoolIndex = idx;
+}
+
+int ASKProjectileBase::GetPoolIndex() {
+	return PoolIndex;
+}
+
+bool ASKProjectileBase::IsActive() {
+	return BIsActive;
+}
+
+void ASKProjectileBase::Deactivate() {
+	SetActive(false);
+	GetWorldTimerManager().ClearAllTimersForObject(this);
+	OnPooledProjectileDespawn.Broadcast(this);
+}
