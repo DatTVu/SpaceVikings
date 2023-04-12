@@ -16,5 +16,24 @@ class SPACEVIKINGS_API ASKEnemyCharacter : public ASKCharacterBase
 public:
 	// Sets default values for this character's properties
 	ASKEnemyCharacter();
-	
+
+	bool IsActive();
+
+	void SetActive(bool isActive);
+
+	void SetLifeSpan(float lifeSpan);
+
+	int GetPoolIndex();
+
+	void SetPoolIndex(int idx);
+
+
+protected:
+	bool BIsActive = false;
+
+	float LifeSpan;
+
+	int PoolIndex = 0;
+
+	FTimerHandle LifeSpanTimer;
 };

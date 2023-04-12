@@ -7,6 +7,8 @@
 #include "Camera/CameraComponent.h" 
 #include "Components/StaticMeshComponent.h"
 #include "../Abilities/SKAbilitySystemComponent.h"
+#include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
+#include "Camera/CameraActor.h"
 #include "Engine/StaticMesh.h"
 
 static const FString PlayerMeshName = "/Game/Assets/LPSD2_Meshes/Pirate/SM_PirateShip_1.SM_PirateShip_1";
@@ -15,23 +17,13 @@ ASKPlayerCharacter::ASKPlayerCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	//Initialize the Camera Boom    
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	//Setup Camera Boom attachment to the Root component of the class
-	CameraBoom->SetupAttachment(RootComponent);
-	//Set the boolean to use the PawnControlRotation to true.
-	CameraBoom->bUsePawnControlRotation = true;
-	//Initialize the FollowCamera
-	FollowTopDownCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	//Set FollowCamera attachment to the Camera Boom
-	FollowTopDownCamera->SetupAttachment(CameraBoom);
 	//Init vector to hold value for orb combination
 	VecOrbCombination.Init(EOrb::NONE, MaxOrbCnt);
 	//Set up static mesh
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	UStaticMesh* MyMesh = LoadObject<UStaticMesh>(nullptr, *PlayerMeshName);
 	StaticMeshComponent->SetStaticMesh(MyMesh);
-	StaticMeshComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	StaticMeshComponent->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
@@ -42,6 +34,20 @@ void ASKPlayerCharacter::BeginPlay()
 	// Display a debug message for five seconds. 
 	// The -1 "Key" value argument prevents the message from being updated or refreshed.
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Spawning Player Character."));
+	if (APlayerController* PlayerCharacterController = Cast<APlayerController>(this->GetController()))
+	{
+		//Array to contain found Camera Actors
+		TArray<AActor*> FoundActors;
+		//Utility function to populate array with all Camera Actors in the level
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), CameraToFind, FoundActors);
+		//Sets Player Controller view to the first CameraActor found 
+		PlayerCharacterController->SetViewTargetWithBlend(FoundActors[0], 1.0, EViewTargetBlendFunction::VTBlend_Linear);
+	}
+}
+
+void ASKPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
 }
 
 // Called every frame

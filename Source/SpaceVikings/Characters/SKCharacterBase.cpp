@@ -187,6 +187,7 @@ void ASKCharacterBase::Fire() {
 
 		//Transform muzzle offset from camera to world space
 		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
+		MuzzleLocation.Z = 0.0f;
 
 		//Skew the aim the be slightly upwards
 		//FRotator MuzzleRotation = CameraRotation;
@@ -198,10 +199,6 @@ void ASKCharacterBase::Fire() {
 		ASKProjectileBase* Projectile = MyProjectilePool->SpawnPooledProjectile();
 		if (Projectile != nullptr) {
 			check(GEngine != nullptr);
-			// Display a debug message for five seconds. 
-			// The -1 "Key" value argument prevents the message from being updated or refreshed.
-			//FString IntAsString = FString::FromInt(Projectile->GetPoolIndex());
-			//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, IntAsString);
 			Projectile->SetActorLocation(MuzzleLocation);
 			Projectile->SetInstigator(GetInstigator());
 			Projectile->FireInDirection(CameraRotation.Vector());

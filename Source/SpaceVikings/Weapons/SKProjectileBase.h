@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../SpaceVikings.h"
-#include "SKPooledActorBase.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -58,8 +57,8 @@ public:
 	UStaticMeshComponent* ProjectileMeshComponent;
 
 	// Projectile material
-	//UPROPERTY(VisibleDefaultsOnly, Category = Movement)
-	//UMaterialInstanceDynamic* ProjectileMaterialInstance;
+	UPROPERTY(VisibleDefaultsOnly, Category = Movement)
+	UMaterialInstanceDynamic* ProjectileMaterialInstance;
 
 	//Function to initialize the projectile's velocity in the shoot direction
 	void FireInDirection(const FVector& shootDirection);

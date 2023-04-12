@@ -20,7 +20,7 @@ ASKProjectileBase::ASKProjectileBase()
 		CollisionComponent->OnComponentHit.AddDynamic(this, &ASKProjectileBase::OnHit);
 		//Set the sphere's collision radius
 		//TO-DO: remove magic number here
-		CollisionComponent->InitSphereRadius(15.0f);
+		CollisionComponent->InitSphereRadius(10.0f);
 		//Set the root component to the collision component;
 		RootComponent = CollisionComponent;
 	}
@@ -39,20 +39,19 @@ ASKProjectileBase::ASKProjectileBase()
 
 	if (!ProjectileMeshComponent) {
 		ProjectileMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ProjectileMeshComponent"));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh>Mesh(TEXT("'/Game/Assets/Sphere.Sphere'"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh>Mesh(TEXT("/Game/Assets/Sphere.Sphere"));
 		if (Mesh.Succeeded()) {
 			ProjectileMeshComponent->SetStaticMesh(Mesh.Object);
 		}
-		//static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("'/Game/Assets/SphereMaterial.SphereMaterial'"));
-		//if (Material.Succeeded()) {
-		//	ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
-		//}
+		static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("/Game/Assets/SphereMaterial.SphereMaterial"));
+		if (Material.Succeeded()) {
+			ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
+		}
 		//TO-DO: remove magic number here
-		//ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
+		ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
 		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.1f, 0.1f, 0.1f));
 		ProjectileMeshComponent->SetupAttachment(RootComponent);
 	}
-
 	// Delete the projectile after 3 seconds.
 	//InitialLifeSpan = 3.0f;
 }
@@ -72,7 +71,7 @@ void ASKProjectileBase::Tick(float DeltaTime)
 }
 
 void ASKProjectileBase::FireInDirection(const FVector& ShootDirection) {
-	ProjectileMovementComponent->Velocity = ShootDirection * 3000.0f;
+	ProjectileMovementComponent->Velocity = ShootDirection * 1000.0f;
 }
 
 // Function that is called when the projectile hits something.

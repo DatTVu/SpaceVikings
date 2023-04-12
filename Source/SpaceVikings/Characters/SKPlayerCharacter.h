@@ -6,6 +6,7 @@
 #include "SKCharacterBase.h"
 #include "SKPlayerCharacter.generated.h"
 
+class ACameraActor;
 UCLASS()
 class SPACEVIKINGS_API ASKPlayerCharacter : public ASKCharacterBase
 {
@@ -39,16 +40,13 @@ private:
 	const int MaxOrbCnt = 2;
 	FORCEINLINE void HanddleOrb(const EOrb eVal);
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ACameraActor> CameraToFind;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	// TopDown camera.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
-		class USpringArmComponent* CameraBoom;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
-		class UCameraComponent* FollowTopDownCamera;
 	
-
 public:
+	virtual void PossessedBy(AController* NewController) override;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	// Called to bind functionality to input

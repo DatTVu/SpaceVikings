@@ -30,7 +30,7 @@ public:
 	/* Returns the ability system component to use for this actor.
 	It may live on another actor, such as a Pawn using the PlayerState's component */
 	UAbilitySystemComponent* GetAbilitySystemComponent() const override {
-		return SKAbilitySystemComponent;
+	return SKAbilitySystemComponent;
 	};
 
 	/** Returns current health, will be 0 if dead */

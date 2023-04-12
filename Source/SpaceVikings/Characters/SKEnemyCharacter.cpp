@@ -2,7 +2,8 @@
 
 
 #include "SKEnemyCharacter.h"
-static const FString EnemyMeshName = "/Game/Assets/LPSD2_Meshes/Flora/SM_BananaTree_1.SM_BananaTree_1";
+//const FString PlayerMeshName = "/Game/Assets/LPSD2_Meshes/Pirate/SM_PirateShip_1.SM_PirateShip_1";
+static const FString EnemyMeshName = "/Game/Assets/LPSD2_Meshes/Beach/SM_SmallBoat_1.SM_SmallBoat_1";
 ASKEnemyCharacter::ASKEnemyCharacter() {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -10,6 +11,34 @@ ASKEnemyCharacter::ASKEnemyCharacter() {
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	UStaticMesh* MyMesh = LoadObject<UStaticMesh>(nullptr, *EnemyMeshName);
 	StaticMeshComponent->SetStaticMesh(MyMesh);
-	StaticMeshComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetIncludingScale);
+	StaticMeshComponent->SetupAttachment(RootComponent);
+	//StaticMeshComponent->AttachToComponent(RootComponent, FAttachmentTransformRules::SnapToTargetIncludingScale);
+}
+
+bool ASKEnemyCharacter::IsActive()
+{
+	return BIsActive;
+}
+
+void ASKEnemyCharacter::SetActive(bool isActive)
+{
+	BIsActive = isActive;
+	SetActorHiddenInGame(!isActive);
+	//GetWorldTimerManager().SetTimer(LifeSpanTimer, this, &ASKEnemyCharacter::Deactivate, LifeSpan, false);
+}
+
+void ASKEnemyCharacter::SetLifeSpan(float lifeSpan)
+{
+	LifeSpan = lifeSpan;
+}
+
+int ASKEnemyCharacter::GetPoolIndex()
+{
+	return PoolIndex;
+}
+
+void ASKEnemyCharacter::SetPoolIndex(int idx)
+{
+	PoolIndex = idx;
 }
 
