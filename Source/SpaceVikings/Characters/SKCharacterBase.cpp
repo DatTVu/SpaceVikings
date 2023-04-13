@@ -15,8 +15,6 @@
 // Sets default values
 ASKCharacterBase::ASKCharacterBase()
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
 	// Create ability system component, and set it to be explicitly replicated
 	SKAbilitySystemComponent = CreateDefaultSubobject<USKAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	SKAbilitySystemComponent->SetIsReplicated(true);

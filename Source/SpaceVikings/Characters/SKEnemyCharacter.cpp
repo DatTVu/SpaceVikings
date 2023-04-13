@@ -42,3 +42,9 @@ void ASKEnemyCharacter::SetPoolIndex(int idx)
 	PoolIndex = idx;
 }
 
+void ASKEnemyCharacter::Tick(float DeltaTime)
+{
+	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::X);
+	AddMovementInput(direction, 0.1);
+}
+

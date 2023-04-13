@@ -27,6 +27,7 @@ public:
 
 	void SetPoolIndex(int idx);
 
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	bool BIsActive = false;
