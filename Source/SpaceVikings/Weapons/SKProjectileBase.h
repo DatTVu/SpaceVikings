@@ -1,26 +1,42 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
-#include "CoreMinimal.h"
+#include "../SpaceVikings.h"
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "ProjectileBase.generated.h"
+#include "SKProjectileBase.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPooledProjectileDespawn, ASKProjectileBase*, PooledProjectile);
 
 UCLASS()
-class SPACEVIKINGS_API AProjectileBase : public AActor
+class SPACEVIKINGS_API ASKProjectileBase : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
-	AProjectileBase();
+	ASKProjectileBase();
+
+	FOnPooledProjectileDespawn OnPooledProjectileDespawn;
+
+	UFUNCTION(BlueprintCallable, Category = "Pooled Projectile")
+	void Deactivate();
+
+	// Properties that enable the object to be pooled
+	bool IsActive();
+
+	void SetActive(bool isActive);
+
+	void SetLifeSpan(float lifeSpan);
+
+	int GetPoolIndex();
+
+	void SetPoolIndex(int idx);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -43,7 +59,12 @@ public:
 	// Projectile material
 	UPROPERTY(VisibleDefaultsOnly, Category = Movement)
 	UMaterialInstanceDynamic* ProjectileMaterialInstance;
-	
+
 	//Function to initialize the projectile's velocity in the shoot direction
 	void FireInDirection(const FVector& shootDirection);
+protected:
+	bool BIsActive = false;
+	float ProjectileLifeSpan;
+	int PoolIndex = 0;
+	FTimerHandle LifeSpanTimer;
 };
