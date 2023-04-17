@@ -12,7 +12,7 @@ void USKProjectilePool::BeginPlay() {
 
 		if (World != nullptr) {
 			for (int i = 0; i < PoolSize; ++i) {
-				ASKProjectileBase* PooledProjectile = World->SpawnActor<ASKProjectileBase>(PooledObjectSubClass, FVector(100000, 100000, -100000), FRotator(0, 0, 0));
+				ASKProjectileBase* PooledProjectile = World->SpawnActor<ASKProjectileBase>(PooledObjectSubClass, FVector(10000, 10000, -10000), FRotator(0, 0, 0));
 				if (PooledProjectile != nullptr) {
 					PooledProjectile->SetActive(false);
 					PooledProjectile->SetPoolIndex(i);
@@ -27,7 +27,7 @@ void USKProjectilePool::BeginPlay() {
 ASKProjectileBase* USKProjectilePool::SpawnPooledProjectile() {
 	for (ASKProjectileBase* PooledProjectile : ActorPool) {
 		if (PooledProjectile != nullptr && !PooledProjectile->IsActive()) {
-			PooledProjectile->TeleportTo(FVector(100000, 100000, -100000), FRotator(0, 0, 0));
+			PooledProjectile->TeleportTo(FVector(10000, 10000, -10000), FRotator(0, 0, 0));
 			PooledProjectile->SetLifeSpan(ActorLifeSpan);
 			PooledProjectile->SetActive(true);
 			SpawnedActorIndex.Add(PooledProjectile->GetPoolIndex());
@@ -40,7 +40,7 @@ ASKProjectileBase* USKProjectilePool::SpawnPooledProjectile() {
 		SpawnedActorIndex.Remove(PooledIndex);
 		ASKProjectileBase* PooledProjectile = ActorPool[PooledIndex];
 		if (PooledProjectile != nullptr) {
-			PooledProjectile->TeleportTo(FVector(100000, 100000, -100000), FRotator(0, 0, 0));
+			PooledProjectile->TeleportTo(FVector(10000, 10000, -10000), FRotator(0, 0, 0));
 			PooledProjectile->SetLifeSpan(ActorLifeSpan);
 			PooledProjectile->SetActive(true);
 			SpawnedActorIndex.Add(PooledProjectile->GetPoolIndex());
@@ -52,7 +52,7 @@ ASKProjectileBase* USKProjectilePool::SpawnPooledProjectile() {
 }
 
 void USKProjectilePool::OnPooledActorDespawn(ASKProjectileBase* PooledActor) {
-	PooledActor->TeleportTo(FVector(100000, 100000, -100000), FRotator(0, 0, 0));
+	PooledActor->TeleportTo(FVector(10000, 10000, -10000), FRotator(0, 0, 0));
 	SpawnedActorIndex.Remove(PooledActor->GetPoolIndex());
 }
 

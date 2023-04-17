@@ -114,7 +114,6 @@ protected:
 	class USKProjectilePool* MyProjectilePool;
 	
 protected:
-	FVector ShootDirection;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

@@ -16,20 +16,38 @@ public:
 	// Sets default values for this actor's properties
 	ASKEnemyPool();
 
-	UFUNCTION(BlueprintCallable, Category = "Enemy Pool")
-	ASKEnemyCharacter* SpawnPooledEnemies();
-
 	UFUNCTION()
 	void OnPooledEnemyDespawn(ASKEnemyCharacter* PooledEnemy);
 
 	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
-	TSubclassOf<ASKEnemyCharacter> PooledEnemySubClass;
+	int PoolSize = 0;
 
 	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
-	int PoolSize = 10;
+	float LineStartXPos = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
-	float ActorLifeSpan;
+	float MaxLineStartXPos = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
+	float LineStartYPos = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
+	int EnemyPerLine = 0;
+
+	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
+	float XStride = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
+	float YStride = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
+	float MoveSpeed = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
+	float MoveSpeedIncrement = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
+	TArray<TSubclassOf<ASKEnemyCharacter>> EnemyCharacterClassVec;
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -38,12 +56,19 @@ protected:
 	virtual void BeginPlay() override;
 	TArray<ASKEnemyCharacter*> EnemyActorPool;
 	TArray<int> SpawnedEnemyActorIndex;
+	void ResetEnemies();
 
 private:
+	TAtomic<bool> m_IsSpawning = true;
 	float m_direction;
 	bool m_bFlippedDirection;
 	bool m_bMoveDown;
 	float m_shootTime;
 	float m_shootTimer;
 	bool m_canShoot = false;
+	int m_enemyAliveCount = 0;
+	int m_enemyClassCnt = 0;
+	int m_enemyCntPerClass = 0;
+	int m_rowPerClass = 0;
+	int m_maxRowIdx = 0;
 };

@@ -4,6 +4,8 @@
 #include "SKProjectileBase.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "../Characters/SKEnemyCharacter.h"
+#include "../Characters/SKPlayerCharacter.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 ASKProjectileBase::ASKProjectileBase()
@@ -36,7 +38,7 @@ ASKProjectileBase::ASKProjectileBase()
 		ProjectileMovementComponent->InitialSpeed = 3000.0f;
 		ProjectileMovementComponent->MaxSpeed = 3000.0f;
 		ProjectileMovementComponent->bRotationFollowsVelocity = true;
-		ProjectileMovementComponent->bShouldBounce = true;
+		ProjectileMovementComponent->bShouldBounce = false;
 		ProjectileMovementComponent->Bounciness = 0.0f;
 		ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
 	}
@@ -67,14 +69,20 @@ void ASKProjectileBase::Tick(float DeltaTime)
 
 void ASKProjectileBase::FireInDirection(const FVector& ShootDirection) {
 	ProjectileMovementComponent->SetUpdatedComponent(GetRootComponent());
-	ProjectileMovementComponent->Velocity = FVector(1.0, 0.0, 0.0) * 500.0f;
+	ProjectileMovementComponent->Velocity = ShootDirection * 500.0f;
 }
 
 // Function that is called when the projectile hits something.
 void ASKProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
- 	Deactivate();
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT!!!"));
+	if (OtherActor->IsA(ASKEnemyCharacter::StaticClass())) {
+		ASKEnemyCharacter* enemyPtr = Cast<ASKEnemyCharacter>(OtherActor);
+		enemyPtr->Deactivate();
+	}
+	else if (OtherActor->IsA(ASKPlayerCharacter::StaticClass())) {
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT PLAYER!!!"));
+	}
+	Deactivate();
 }
 
 // Properties that enable the object to be pooled

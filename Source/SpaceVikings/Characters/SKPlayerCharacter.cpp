@@ -32,7 +32,6 @@ ASKPlayerCharacter::ASKPlayerCharacter()
 		StaticMeshComponent->SetStaticMesh(SphereVisualAsset.Object);
 	}
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
-	ShootDirection = FVector(-1.0f, 0.0f, 0.0f);
 }
 
 // Called when the game starts or when spawned
@@ -61,14 +60,14 @@ void ASKPlayerCharacter::Tick(float DeltaTime)
 	{
 		FVector newLocation = GetRootComponent()->GetComponentLocation();
 		newLocation.Y += DeltaTime * speed * HorizontalMovement;
-		newLocation.Y = FMath::Min(FMath::Max(newLocation.Y, -450.0f), 450.0f);
+		newLocation.Y = FMath::Min(FMath::Max(newLocation.Y, -600.0f), 600.0f);
 		SetActorLocation(newLocation);
 	}
 
 	if (VerticalMovement != 0.0) {
 		FVector newLocation = GetRootComponent()->GetComponentLocation();
 		newLocation.X += DeltaTime * speed * VerticalMovement;
-		newLocation.X = FMath::Min(FMath::Max(newLocation.X, -300.0f), 300.0f);
+		newLocation.X = FMath::Min(FMath::Max(newLocation.X, -600.0f), 600.0f);
 		SetActorLocation(newLocation);
 	}
 }

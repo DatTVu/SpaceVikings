@@ -25,10 +25,18 @@ public:
 
 	void SetActive(bool isActive);
 
-	int GetPoolIndex();
+	void SetCanMove(bool canMove);
 
-	void SetPoolIndex(int idx);
+	bool CanMove();
 
+	int GetRowIndex();
+
+	int GetColIndex();
+
+	void SetRowIndex(int idx);
+
+	void SetColIndex(int idx);
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StaticMesh")
 	class UStaticMeshComponent* StaticMeshComponent;
 
@@ -37,5 +45,7 @@ public:
 
 protected:
 	bool m_IsActive = false;
-	int m_PoolIndex = 0;
+	bool m_CanMove = false;
+	int m_rowIndex = 0;
+	int m_colIndex = 0;
 };

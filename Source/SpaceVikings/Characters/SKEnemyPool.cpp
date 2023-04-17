@@ -17,84 +17,122 @@ ASKEnemyPool::ASKEnemyPool()
     m_shootTimer = 0.0f;
 }
 
-ASKEnemyCharacter* ASKEnemyPool::SpawnPooledEnemies()
-{
-	return nullptr;
-}
-
 
 void ASKEnemyPool::OnPooledEnemyDespawn(ASKEnemyCharacter* PooledEnemy)
 {
-
+    PooledEnemy->TeleportTo(FVector(10000, 10000, -10000), FRotator(0, 0, 0));
+    --m_enemyAliveCount;
+    MoveSpeed += MoveSpeedIncrement;
+ 
+    if (m_enemyAliveCount <= 0) {
+        m_enemyAliveCount = PoolSize;
+        GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("NEXT LEVEL!!!"));
+        LineStartXPos -= XStride;
+        if (LineStartXPos < MaxLineStartXPos) {
+            LineStartXPos = MaxLineStartXPos;
+        }   
+        ResetEnemies();
+    }
 }
 
 // Called when the game starts or when spawned
 void ASKEnemyPool::BeginPlay()
 {
 	Super::BeginPlay();
-	if (PooledEnemySubClass != nullptr) {
-		UWorld* const World = GetWorld();
-		float XStride = 90.0f;
-		float YStride = 60.0f;
-		if (World != nullptr) {
-			for (int i = 0; i < 5; ++i) {
-				for (int j = -3; j < 3; ++j) {
-					ASKEnemyCharacter* PooledEnemy = World->SpawnActor<ASKEnemyCharacter>(PooledEnemySubClass, FVector(XStride *i, YStride *j, 0.0), FRotator(0, 180, 0));
-					if (PooledEnemy != nullptr) {
-                        if (i == 0) {
-                            PooledEnemy->SetActive(true);
-                        }
-						//PooledEnemy->OnPooledEnemyDespawn.AddDynamic(this, &ASKEnemyPool::OnPooledEnemyDespawn);
-						EnemyActorPool.Add(PooledEnemy);
-					}
-				}
-			}
-		}
+    m_enemyAliveCount = PoolSize;
+    EnemyActorPool.Reserve(PoolSize);
+    UWorld* const World = GetWorld();
+    m_maxRowIdx = (PoolSize - EnemyPerLine) / EnemyPerLine;
+    m_enemyClassCnt = EnemyCharacterClassVec.Num();
+    m_enemyCntPerClass = PoolSize / m_enemyClassCnt;
+    m_rowPerClass = m_enemyCntPerClass / EnemyPerLine;
+    m_IsSpawning = true;
+	if (World != nullptr) {
+        for (int i = 0; i < m_enemyClassCnt; ++i) {
+            for (int j = 0; j < m_enemyCntPerClass; ++j) {
+                int xIdx = j / EnemyPerLine + i * m_rowPerClass;
+                int yIdx = j % EnemyPerLine;
+                ASKEnemyCharacter* PooledEnemy = World->SpawnActor<ASKEnemyCharacter>(EnemyCharacterClassVec[i], 
+                    FVector(LineStartXPos - XStride * xIdx, LineStartYPos + YStride * yIdx, 0.0), FRotator(0, 180, 0));
+                if (PooledEnemy != nullptr) {
+                    if (xIdx >= m_maxRowIdx) {
+                        PooledEnemy->SetActive(true);
+                    }
+                    PooledEnemy->OnPooledEnemyDespawn.AddDynamic(this, &ASKEnemyPool::OnPooledEnemyDespawn);
+                    PooledEnemy->SetCanMove(true);
+                    PooledEnemy->SetRowIndex(xIdx);
+                    PooledEnemy->SetColIndex(yIdx);
+                    EnemyActorPool.Add(PooledEnemy);
+                }
+            }
+        }
 	}
+    m_IsSpawning = false;
+}
+
+void ASKEnemyPool::ResetEnemies()
+{
+    m_IsSpawning = true;
+    for (int i = 0; i < PoolSize; ++i) {
+        ASKEnemyCharacter* PooledEnemy = EnemyActorPool[i];
+        if (PooledEnemy != nullptr) {
+            int xIdx = PooledEnemy->GetRowIndex();
+            int yIdx = PooledEnemy->GetColIndex();
+            if (xIdx >= m_maxRowIdx) {
+                PooledEnemy->SetActive(true);
+            }
+            PooledEnemy->TeleportTo(FVector(LineStartXPos - XStride * xIdx, LineStartYPos + YStride * yIdx, 80.0), FRotator(0, 180, 0));
+            PooledEnemy->SetCanMove(true);
+        }
+    }
+    m_IsSpawning = false;
 }
 
 // Called every frame
 void ASKEnemyPool::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-    m_shootTimer += DeltaTime;
-    if (m_shootTimer >= m_shootTime) {
-        m_shootTimer -= m_shootTime;
-        m_canShoot = true;
-    }
+    if (!m_IsSpawning) {
+        m_shootTimer += DeltaTime;
+        if (m_shootTimer >= m_shootTime) {
+            m_shootTimer -= m_shootTime;
+            m_canShoot = true;
+        }
 
-    for (auto& it : EnemyActorPool) {
-        FVector movement;
-        float speed = 2.0f;
-        if (!m_bMoveDown) {
-            movement = FVector(0, m_direction * speed, 0);
+        for (auto& it : EnemyActorPool) {
+            FVector movement;
+            if (!m_bMoveDown) {
+                movement = FVector(0, m_direction * MoveSpeed, 0);
+            }
+            else {
+                movement = FVector(-MoveSpeed * 2, 0, 0);
+            }
+
+            if (it->CanMove()) {
+                it->AddActorWorldOffset(movement);
+                /* If we hit the border with one of our ships this movement, change direction
+                * and move down in the next movement */
+                if (!m_bMoveDown && FMath::Abs(it->GetActorLocation().Y) >= 600) {
+                    m_bFlippedDirection = true;
+                }
+            }
+
+            if (it->IsActive() && m_canShoot) {
+                it->Fire();
+            }
+        }
+
+        if (m_bFlippedDirection) {
+            /* Flip the direction */
+            m_direction = -m_direction;
+            m_bFlippedDirection = false;
+            /* If we've flipped direction, we should move down first */
+            m_bMoveDown = true;
         }
         else {
-            movement = FVector(-speed * 2, 0, 0);
+            m_bMoveDown = false;
         }
-
-        it->AddActorWorldOffset(movement);
-        if (it->IsActive() && m_canShoot) {
-            it->Fire();
-        }
-
-        /* If we hit the border with one of our ships this movement, change direction
-         * and move down in the next movement */
-        if (!m_bMoveDown && FMath::Abs(it->GetActorLocation().Y) >= 450) {
-            m_bFlippedDirection = true;
-        }
+        m_canShoot = false;
     }
-
-    if (m_bFlippedDirection) {
-        /* Flip the direction */
-        m_direction = -m_direction;
-        m_bFlippedDirection = false;
-        /* If we've flipped direction, we should move down first */
-        m_bMoveDown = true;
-    }
-    else {
-        m_bMoveDown = false;
-    }
-    m_canShoot = false;
 }
 

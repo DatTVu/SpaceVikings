@@ -178,7 +178,7 @@ void ASKCharacterBase::Fire() {
 		if (Projectile != nullptr) {
 			check(GEngine != nullptr);
 			Projectile->SetActorLocation(MuzzleLocation);
-			Projectile->SetInstigator(GetInstigator());
+			Projectile->SetInstigator(this);
 			Projectile->FireInDirection(CameraRotation.Vector());
 		}
 	}
