@@ -6,6 +6,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h" 
 #include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
 #include "../Abilities/SKAbilitySystemComponent.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "Camera/CameraActor.h"
@@ -16,14 +17,22 @@ static const FString PlayerMeshName = "/Game/Assets/LPSD2_Meshes/Pirate/SM_Pirat
 ASKPlayerCharacter::ASKPlayerCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	//Init vector to hold value for orb combination
 	VecOrbCombination.Init(EOrb::NONE, MaxOrbCnt);
 	//Set up static mesh
+	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollider"));
+	RootComponent = BoxCollision;
+	BoxCollision->SetCollisionProfileName(TEXT("Pawn"));
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	UStaticMesh* MyMesh = LoadObject<UStaticMesh>(nullptr, *PlayerMeshName);
-	StaticMeshComponent->SetStaticMesh(MyMesh);
 	StaticMeshComponent->SetupAttachment(RootComponent);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SphereVisualAsset(TEXT("/Game/Assets/LPSD2_Meshes/Pirate/SM_PirateShip_1.SM_PirateShip_1"));
+	if (SphereVisualAsset.Succeeded())
+	{
+		StaticMeshComponent->SetStaticMesh(SphereVisualAsset.Object);
+	}
+	AutoPossessPlayer = EAutoReceiveInput::Player0;
+	ShootDirection = FVector(-1.0f, 0.0f, 0.0f);
 }
 
 // Called when the game starts or when spawned
@@ -31,8 +40,6 @@ void ASKPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	check(GEngine != nullptr);
-	// Display a debug message for five seconds. 
-	// The -1 "Key" value argument prevents the message from being updated or refreshed.
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Spawning Player Character."));
 	if (APlayerController* PlayerCharacterController = Cast<APlayerController>(this->GetController()))
 	{
@@ -45,15 +52,25 @@ void ASKPlayerCharacter::BeginPlay()
 	}
 }
 
-void ASKPlayerCharacter::PossessedBy(AController* NewController)
-{
-	Super::PossessedBy(NewController);
-}
-
 // Called every frame
 void ASKPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	float speed = 300.0f;
+	if (HorizontalMovement != 0.0) 
+	{
+		FVector newLocation = GetRootComponent()->GetComponentLocation();
+		newLocation.Y += DeltaTime * speed * HorizontalMovement;
+		newLocation.Y = FMath::Min(FMath::Max(newLocation.Y, -450.0f), 450.0f);
+		SetActorLocation(newLocation);
+	}
+
+	if (VerticalMovement != 0.0) {
+		FVector newLocation = GetRootComponent()->GetComponentLocation();
+		newLocation.X += DeltaTime * speed * VerticalMovement;
+		newLocation.X = FMath::Min(FMath::Max(newLocation.X, -300.0f), 300.0f);
+		SetActorLocation(newLocation);
+	}
 }
 
 // Called to bind functionality to input
@@ -61,11 +78,8 @@ void ASKPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	// Set up movements
-	PlayerInputComponent->BindAxis("MoveForward", this, &ASKCharacterBase::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &ASKCharacterBase::MoveRight);
-	// Set up "jump" bindings.
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASKCharacterBase::StartJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ASKCharacterBase::StopJump);
+	PlayerInputComponent->BindAxis("MoveForward", this, &ASKPlayerCharacter::MoveForward);
+	PlayerInputComponent->BindAxis("MoveRight", this, &ASKPlayerCharacter::MoveRight);
 	// Set up "fire" bindings
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ASKCharacterBase::Fire);
 	// Set up invoke orb bindings
@@ -73,6 +87,16 @@ void ASKPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction("Wex", IE_Released, this, &ASKPlayerCharacter::HandleWexPressed);
 	PlayerInputComponent->BindAction("Exort", IE_Released, this, &ASKPlayerCharacter::HandleExortPressed);
 	PlayerInputComponent->BindAction("Invoke", IE_Released, this, &ASKPlayerCharacter::HandleInvorkPressed);
+}
+
+void ASKPlayerCharacter::MoveForward(float Value)
+{
+	VerticalMovement = Value;
+}
+
+void ASKPlayerCharacter::MoveRight(float Value)
+{
+	HorizontalMovement = Value;
 }
 
 
@@ -135,4 +159,8 @@ void ASKPlayerCharacter::HandleInvorkPressed() {
 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, skillInvoked);
 #else
 #endif
+}
+
+void ASKPlayerCharacter::OnBeginOverlap(AActor* otherActor)
+{
 }

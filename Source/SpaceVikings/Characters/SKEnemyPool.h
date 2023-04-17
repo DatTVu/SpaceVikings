@@ -17,27 +17,33 @@ public:
 	ASKEnemyPool();
 
 	UFUNCTION(BlueprintCallable, Category = "Enemy Pool")
-		ASKEnemyCharacter* SpawnPooledEnemies();
+	ASKEnemyCharacter* SpawnPooledEnemies();
 
 	UFUNCTION()
-		void OnPooledEnemyDespawn(ASKEnemyCharacter* PooledActor);
+	void OnPooledEnemyDespawn(ASKEnemyCharacter* PooledEnemy);
 
 	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
-		TSubclassOf<ASKEnemyCharacter> PooledEnemySubClass;
+	TSubclassOf<ASKEnemyCharacter> PooledEnemySubClass;
 
 	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
-		int PoolSize = 10;
+	int PoolSize = 10;
 
 	UPROPERTY(EditAnywhere, Category = "Enemy Pool")
-		float ActorLifeSpan;
+	float ActorLifeSpan;
 
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	TArray<ASKEnemyCharacter*> EnemyActorPool;
 	TArray<int> SpawnedEnemyActorIndex;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+private:
+	float m_direction;
+	bool m_bFlippedDirection;
+	bool m_bMoveDown;
+	float m_shootTime;
+	float m_shootTimer;
+	bool m_canShoot = false;
 };

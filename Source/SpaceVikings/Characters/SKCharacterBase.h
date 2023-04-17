@@ -6,9 +6,7 @@
 #include "../Abilities/SKAbilitySystemComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "AbilitySystemInterface.h"
-#include "GameFramework/Character.h"
-#include "GameplayEffectTypes.h"
-#include "Components/StaticMeshComponent.h"
+#include "GameFramework/Pawn.h"
 #include "SKCharacterBase.generated.h"
 
 class USKAttributeSetBase;
@@ -16,10 +14,9 @@ class USKGameplayAbility;
 class USKProjectilePool;
 class ASKProjectileBase;
 class UGameplayEffect;
-class UStaticMeshComponent;
 
 UCLASS()
-class SPACEVIKINGS_API ASKCharacterBase : public ACharacter, public IAbilitySystemInterface
+class SPACEVIKINGS_API ASKCharacterBase : public APawn, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -65,32 +62,16 @@ public:
 	 */
 	virtual void PossessedBy(AController* NewController) override;
 
-	// Called to handle movements
-	UFUNCTION()
-		void MoveForward(float Value);
-
-	UFUNCTION()
-		void MoveRight(float Value);
-
-	// Sets jump flag when key is pressed.
-	UFUNCTION()
-		void StartJump();
-
-	// Clears jump flag when key is released.
-	UFUNCTION()
-		void StopJump();
-
 	// Fire function
 	UFUNCTION()
 		void Fire();
+	
 public:
 	// Gun muzzle offset from the camera location.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
 	FVector MuzzleOffset;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StaticMesh")
-	UStaticMeshComponent* StaticMeshComponent;
 	/** List of attributes modified by the ability system */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USKAttributeSetBase* AttributeSet;
@@ -131,9 +112,9 @@ protected:
 	// Projectile class to spawn.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Projectile")
 	class USKProjectilePool* MyProjectilePool;
-	//UPROPERTY(EditDefaultsOnly, Category = "Projectile")
-	//TSubclassOf<ASKProjectileBase> ProjectileClass;
+	
 protected:
+	FVector ShootDirection;
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 

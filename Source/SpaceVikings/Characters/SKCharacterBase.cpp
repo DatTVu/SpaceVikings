@@ -8,6 +8,7 @@
 #include "../SKPlayerController.h"
 #include "../Weapons/SKProjectilePool.h"
 #include "../Weapons/SKProjectileBase.h"
+#include "GameplayEffectTypes.h"
 #include "AbilitySystemGlobals.h"
 #include "AbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -19,12 +20,14 @@ ASKCharacterBase::ASKCharacterBase()
 	SKAbilitySystemComponent = CreateDefaultSubobject<USKAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	SKAbilitySystemComponent->SetIsReplicated(true);
 	SKAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
+
 	// Create the attribute set, this replicates by default
 	AttributeSet = CreateDefaultSubobject<USKAttributeSetBase>(TEXT("AttributeSet"));
-	MyProjectilePool = CreateDefaultSubobject<USKProjectilePool>(TEXT("ProjectilePool"));
 	bIsCharacterAbilitiesGranted = false;
 	bIsCharacterEffectsGranted = false;
 	bIsInputBound = false;
+	// Set up bullet pool
+	MyProjectilePool = CreateDefaultSubobject<USKProjectilePool>(TEXT("ProjectilePool"));
 }
 
 // Called when the game starts or when spawned
@@ -32,7 +35,6 @@ void ASKCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 }
-
 
 void ASKCharacterBase::OnManaChanged(const FOnAttributeChangeData& Data)
 {
@@ -64,7 +66,6 @@ void ASKCharacterBase::ApplyExhaustionEffect()
 	if (CurrentGameplayEffectSpecHandle.IsValid()) {
 		SKAbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), SKAbilitySystemComponent);
 	}
-
 }
 
 // Called every frame
@@ -73,6 +74,8 @@ void ASKCharacterBase::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 }
 
+
+#pragma region Abilities
 // Called to bind functionality to input
 void ASKCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -147,29 +150,7 @@ void ASKCharacterBase::SetupAbilitiesInputs() {
 	);
 	bIsInputBound = true;
 }
-
-#pragma region Movements
-
-void ASKCharacterBase::MoveForward(float Value) {
-	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::X);
-	AddMovementInput(direction, Value);
-}
-
-void ASKCharacterBase::MoveRight(float Value) {
-	FVector direction = FRotationMatrix(Controller->GetControlRotation()).GetScaledAxis(EAxis::Y);
-	AddMovementInput(direction, Value);
-}
-
-void ASKCharacterBase::StartJump()
-{
-	bPressedJump = true;
-}
-
-void ASKCharacterBase::StopJump()
-{
-	bPressedJump = false;
-}
-#pragma endregion Movements
+#pragma endregion Abilities
 
 #pragma region Actions
 void ASKCharacterBase::Fire() {
@@ -185,13 +166,12 @@ void ASKCharacterBase::Fire() {
 
 		//Transform muzzle offset from camera to world space
 		FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
-		MuzzleLocation.Z = 0.0f;
+		MuzzleLocation.Z = 80.0f;
 
 		//Skew the aim the be slightly upwards
 		//FRotator MuzzleRotation = CameraRotation;
 		//TO-DO: remove magic number here
 		//MuzzleRotation.Pitch += 10.0f;
-
 
 		//Spawn the projectile at the muzzle
 		ASKProjectileBase* Projectile = MyProjectilePool->SpawnPooledProjectile();

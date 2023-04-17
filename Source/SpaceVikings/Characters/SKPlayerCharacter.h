@@ -46,11 +46,28 @@ protected:
 	virtual void BeginPlay() override;
 	
 public:
-	virtual void PossessedBy(AController* NewController) override;
+	//virtual void PossessedBy(AController* NewController) override;
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	// Called to handle movements
+	UFUNCTION()
+	void MoveForward(float Value);
+
+	UFUNCTION()
+	void MoveRight(float Value);
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StaticMesh")
+	class UStaticMeshComponent* StaticMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BoxCollision")
+	class UBoxComponent* BoxCollision;
+
+	float HorizontalMovement = 0.0f;
+	float VerticalMovement = 0.0f;
+	
 
 	UFUNCTION()
 		void HandleQuasPressed();
@@ -60,4 +77,6 @@ public:
 		void HandleExortPressed();
 	UFUNCTION()
 		void HandleInvorkPressed();
+	UFUNCTION()
+		void OnBeginOverlap(AActor* otherActor);
 };

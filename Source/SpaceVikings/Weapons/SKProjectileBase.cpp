@@ -2,12 +2,16 @@
 
 
 #include "SKProjectileBase.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/SphereComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 ASKProjectileBase::ASKProjectileBase()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	if (!RootComponent) {
+	if (!RootComponent)
+	{
 		RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("ProjectileSceneComponent"));
 	}
 
@@ -20,7 +24,7 @@ ASKProjectileBase::ASKProjectileBase()
 		CollisionComponent->OnComponentHit.AddDynamic(this, &ASKProjectileBase::OnHit);
 		//Set the sphere's collision radius
 		//TO-DO: remove magic number here
-		CollisionComponent->InitSphereRadius(10.0f);
+		CollisionComponent->InitSphereRadius(15.0f);
 		//Set the root component to the collision component;
 		RootComponent = CollisionComponent;
 	}
@@ -33,7 +37,7 @@ ASKProjectileBase::ASKProjectileBase()
 		ProjectileMovementComponent->MaxSpeed = 3000.0f;
 		ProjectileMovementComponent->bRotationFollowsVelocity = true;
 		ProjectileMovementComponent->bShouldBounce = true;
-		ProjectileMovementComponent->Bounciness = 0.3f;
+		ProjectileMovementComponent->Bounciness = 0.0f;
 		ProjectileMovementComponent->ProjectileGravityScale = 0.0f;
 	}
 
@@ -43,24 +47,15 @@ ASKProjectileBase::ASKProjectileBase()
 		if (Mesh.Succeeded()) {
 			ProjectileMeshComponent->SetStaticMesh(Mesh.Object);
 		}
-		static ConstructorHelpers::FObjectFinder<UMaterial>Material(TEXT("/Game/Assets/SphereMaterial.SphereMaterial"));
-		if (Material.Succeeded()) {
-			ProjectileMaterialInstance = UMaterialInstanceDynamic::Create(Material.Object, ProjectileMeshComponent);
-		}
-		//TO-DO: remove magic number here
-		ProjectileMeshComponent->SetMaterial(0, ProjectileMaterialInstance);
-		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.1f, 0.1f, 0.1f));
-		ProjectileMeshComponent->SetupAttachment(RootComponent);
+		ProjectileMeshComponent->SetRelativeScale3D(FVector(0.09f, 0.09f, 0.09f));
+		ProjectileMeshComponent->SetupAttachment(CollisionComponent);
 	}
-	// Delete the projectile after 3 seconds.
-	//InitialLifeSpan = 3.0f;
 }
 
 // Called when the game starts or when spawned
 void ASKProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 
@@ -71,19 +66,15 @@ void ASKProjectileBase::Tick(float DeltaTime)
 }
 
 void ASKProjectileBase::FireInDirection(const FVector& ShootDirection) {
-	ProjectileMovementComponent->Velocity = ShootDirection * 1000.0f;
+	ProjectileMovementComponent->SetUpdatedComponent(GetRootComponent());
+	ProjectileMovementComponent->Velocity = FVector(1.0, 0.0, 0.0) * 500.0f;
 }
 
 // Function that is called when the projectile hits something.
 void ASKProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-	Deactivate();
+ 	Deactivate();
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT!!!"));
-	//if (OtherActor != this && OtherComponent->IsSimulatingPhysics())
-	//{
-		//OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * 100.0f, Hit.ImpactPoint);
-	//}
-	//Destroy();
 }
 
 // Properties that enable the object to be pooled
@@ -111,6 +102,9 @@ bool ASKProjectileBase::IsActive() {
 
 void ASKProjectileBase::Deactivate() {
 	SetActive(false);
+	ProjectileMovementComponent->Velocity.X = 0;
+	ProjectileMovementComponent->Velocity.Y = 0;
+	ProjectileMovementComponent->Velocity.Z = 0;
 	GetWorldTimerManager().ClearAllTimersForObject(this);
 	OnPooledProjectileDespawn.Broadcast(this);
 }
