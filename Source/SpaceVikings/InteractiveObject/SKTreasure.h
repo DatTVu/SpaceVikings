@@ -17,6 +17,7 @@ public:
 	float GetMaxHP() { return m_MaxHP; }
 	float GetHP() { return m_HP; }
 	void  DecreaseHP(float val);
+	void  Deactivate();
 
 protected:
 	// Called when the game starts or when spawned

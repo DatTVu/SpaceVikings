@@ -58,6 +58,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 		void DecreasePlayerHealth(float val);
 
+	UFUNCTION(BlueprintCallable)
+		int GetPlayerScore() { return m_playerScore; }
+
+	UFUNCTION(BlueprintCallable)
+		int GetPlayerHighScore() { return m_playerHighScore; }
+
+	UFUNCTION(BlueprintCallable)
+		void IncreasePlayerScore(int val) { m_playerScore += val; }
+
 	bool IsInvulnerable() { return m_IsInvulnerable; }
 private:
 	//TO-DO: refactore this enum. now it needs to declare infront of TArray
@@ -88,6 +97,8 @@ private:
 	float m_InvulnerableTimer = 0.0f;
 	float m_playerMaxHealth = 5.0f;
 	float m_playerHealth = 5.0f;
+	int m_playerScore = 0;
+	int m_playerHighScore = 0;
 	FORCEINLINE void HanddleOrb(const EOrb eVal);
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

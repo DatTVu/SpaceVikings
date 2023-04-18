@@ -6,6 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "../Characters/SKEnemyCharacter.h"
 #include "../Characters/SKPlayerCharacter.h"
+#include "../InteractiveObject/SKTreasure.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
 ASKProjectileBase::ASKProjectileBase()
@@ -68,8 +69,8 @@ void ASKProjectileBase::Tick(float DeltaTime)
 }
 
 void ASKProjectileBase::FireInDirection(const FVector& ShootDirection) {
-	ProjectileMovementComponent->SetUpdatedComponent(GetRootComponent());
 	ProjectileMovementComponent->Velocity = ShootDirection * 500.0f;
+	ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
 }
 
 // Function that is called when the projectile hits something.
@@ -77,16 +78,28 @@ void ASKProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 {
 	if (OtherActor->IsA(ASKEnemyCharacter::StaticClass())) {
 		ASKEnemyCharacter* enemyPtr = Cast<ASKEnemyCharacter>(OtherActor);
-		enemyPtr->Deactivate();
+		if (enemyPtr) {
+			enemyPtr->Deactivate();
+			auto test = GetOwner();
+			ASKPlayerCharacter* playerPtr = Cast<ASKPlayerCharacter>(GetInstigator());
+			playerPtr->IncreasePlayerScore(3);
+		}
 	}
 	else if (OtherActor->IsA(ASKPlayerCharacter::StaticClass())) {
 		ASKPlayerCharacter* playerPtr = Cast<ASKPlayerCharacter>(OtherActor);
-		if (playerPtr->IsInvulnerable()) {
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("NOT HIT PLAYER!!!"));
+		if (playerPtr) {
+			if (playerPtr->IsInvulnerable()) {
+				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("NOT HIT PLAYER!!!"));
+			}
+			else {
+				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT PLAYER!!!"));
+				playerPtr->DecreasePlayerHealth(1.0f);
+			}
 		}
-		else {
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT PLAYER!!!"));
-			playerPtr->DecreasePlayerHealth(1.0f);
+	}else {
+		ASKTreasure* treasurePtr = Cast<ASKTreasure>(OtherActor);
+		if (treasurePtr) {
+			treasurePtr->TeleportTo(FVector(10000, 10000, 10000), FRotator(0, 0, 0));
 		}
 	}
 	Deactivate();

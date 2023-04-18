@@ -290,12 +290,14 @@ void ASKPlayerCharacter::HandleInvorkPressed() {
 		skillInvoked = "Invalid";
 		break;
 	}
-	m_IsInvulnerable = !m_IsInvulnerable;
+	m_IsInvulnerable = true;
 	m_InvulnerableTimer = 1.0f;
 	// Display a debug message for five seconds. 
 	// The -1 "Key" value argument prevents the message from being updated or refreshed.
 	check(GEngine != nullptr);
 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, skillInvoked);
 #else
+	m_IsInvulnerable = true;
+	m_InvulnerableTimer = 1.0f;
 #endif
 }

@@ -25,6 +25,12 @@ void ASKTreasure::DecreaseHP(float val)
 	}
 }
 
+void ASKTreasure::Deactivate()
+{
+	TeleportTo(FVector(10000, 10000, -10000), FRotator(0, 0, 0));
+	//TeleportTo()
+}
+
 // Called when the game starts or when spawned
 void ASKTreasure::BeginPlay()
 {
