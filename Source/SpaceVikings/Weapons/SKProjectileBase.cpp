@@ -80,7 +80,14 @@ void ASKProjectileBase::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 		enemyPtr->Deactivate();
 	}
 	else if (OtherActor->IsA(ASKPlayerCharacter::StaticClass())) {
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT PLAYER!!!"));
+		ASKPlayerCharacter* playerPtr = Cast<ASKPlayerCharacter>(OtherActor);
+		if (playerPtr->IsInvulnerable()) {
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("NOT HIT PLAYER!!!"));
+		}
+		else {
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("HIT PLAYER!!!"));
+			playerPtr->DecreasePlayerHealth(1.0f);
+		}
 	}
 	Deactivate();
 }

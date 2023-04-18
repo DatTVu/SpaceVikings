@@ -20,10 +20,23 @@ ASKEnemyPool::ASKEnemyPool()
 
 void ASKEnemyPool::OnPooledEnemyDespawn(ASKEnemyCharacter* PooledEnemy)
 {
+    m_IsSpawning = true;
     PooledEnemy->TeleportTo(FVector(10000, 10000, -10000), FRotator(0, 0, 0));
     --m_enemyAliveCount;
     MoveSpeed += MoveSpeedIncrement;
- 
+    int rowIdx = PooledEnemy->GetRowIndex();
+    int colIdx = PooledEnemy->GetColIndex();
+    m_aliveEnemyPos[colIdx][rowIdx] = 0;
+
+    int i = m_aliveEnemyPos[colIdx].Num() - 1;
+    while (i >= 0 && m_aliveEnemyPos[colIdx][i] == 0) {
+        --i;
+    }
+
+    if (i >= 0 && m_aliveEnemyPos[colIdx][i] == 1) {
+        EnemyActorPool[i * EnemyPerLine + colIdx]->SetActive(true);
+    }
+    
     if (m_enemyAliveCount <= 0) {
         m_enemyAliveCount = PoolSize;
         GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("NEXT LEVEL!!!"));
@@ -33,6 +46,7 @@ void ASKEnemyPool::OnPooledEnemyDespawn(ASKEnemyCharacter* PooledEnemy)
         }   
         ResetEnemies();
     }
+    m_IsSpawning = false;
 }
 
 // Called when the game starts or when spawned
@@ -46,6 +60,14 @@ void ASKEnemyPool::BeginPlay()
     m_enemyClassCnt = EnemyCharacterClassVec.Num();
     m_enemyCntPerClass = PoolSize / m_enemyClassCnt;
     m_rowPerClass = m_enemyCntPerClass / EnemyPerLine;
+    m_aliveEnemyPos.Reserve(EnemyPerLine);
+
+    for (int i = 0; i < EnemyPerLine; ++i) {
+        TArray<int> vec;
+        vec.Init(1, PoolSize / EnemyPerLine);
+        m_aliveEnemyPos.Emplace(vec);
+    }
+
     m_IsSpawning = true;
 	if (World != nullptr) {
         for (int i = 0; i < m_enemyClassCnt; ++i) {
@@ -62,6 +84,7 @@ void ASKEnemyPool::BeginPlay()
                     PooledEnemy->SetCanMove(true);
                     PooledEnemy->SetRowIndex(xIdx);
                     PooledEnemy->SetColIndex(yIdx);
+                    m_aliveEnemyPos[yIdx][xIdx] = 1;
                     EnemyActorPool.Add(PooledEnemy);
                 }
             }
@@ -81,6 +104,7 @@ void ASKEnemyPool::ResetEnemies()
             if (xIdx >= m_maxRowIdx) {
                 PooledEnemy->SetActive(true);
             }
+            m_aliveEnemyPos[yIdx][xIdx] = 1;
             PooledEnemy->TeleportTo(FVector(LineStartXPos - XStride * xIdx, LineStartYPos + YStride * yIdx, 80.0), FRotator(0, 180, 0));
             PooledEnemy->SetCanMove(true);
         }

@@ -2,15 +2,20 @@
 
 
 #include "SKPlayerCharacter.h"
-
-#include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h" 
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
-#include "../Abilities/SKAbilitySystemComponent.h"
 #include "Runtime/Engine/Classes/Kismet/GameplayStatics.h"
 #include "Camera/CameraActor.h"
 #include "Engine/StaticMesh.h"
+
+#include "../Abilities/SKAbilitySystemComponent.h"
+#include "../Abilities/SKAttributeSetBase.h"
+#include "../Abilities/SKGameplayAbility.h"
+#include "../SKPlayerController.h"
+#include "GameplayEffectTypes.h"
+#include "AbilitySystemGlobals.h"
+#include "AbilitySystemComponent.h"
 
 static const FString PlayerMeshName = "/Game/Assets/LPSD2_Meshes/Pirate/SM_PirateShip_1.SM_PirateShip_1";
 // Sets default values
@@ -18,6 +23,7 @@ ASKPlayerCharacter::ASKPlayerCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	//PrimaryActorTick.TickGroup = ETickingGroup::TG_DuringPhysics;
 	//Init vector to hold value for orb combination
 	VecOrbCombination.Init(EOrb::NONE, MaxOrbCnt);
 	//Set up static mesh
@@ -31,8 +37,55 @@ ASKPlayerCharacter::ASKPlayerCharacter()
 	{
 		StaticMeshComponent->SetStaticMesh(SphereVisualAsset.Object);
 	}
+	// Create ability system component, and set it to be explicitly replicated
+	SKAbilitySystemComponent = CreateDefaultSubobject<USKAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	SKAbilitySystemComponent->SetIsReplicated(true);
+	SKAbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Full);
+
+	// Create the attribute set, this replicates by default
+	AttributeSet = CreateDefaultSubobject<USKAttributeSetBase>(TEXT("AttributeSet"));
+	bIsCharacterAbilitiesGranted = false;
+	bIsCharacterEffectsGranted = false;
+	bIsInputBound = false;
+
+	//
 	AutoPossessPlayer = EAutoReceiveInput::Player0;
 }
+
+#pragma region AttributeSet
+float ASKPlayerCharacter::GetHealth() const
+{
+	return AttributeSet->GetHealth();
+}
+
+float ASKPlayerCharacter::GetMaxHealth() const
+{
+	return AttributeSet->GetMaxHealth();
+}
+
+float ASKPlayerCharacter::GetMana() const
+{
+	return AttributeSet->GetMana();
+}
+
+float ASKPlayerCharacter::GetMaxMana() const
+{
+	return AttributeSet->GetMaxMana();
+}
+
+float ASKPlayerCharacter::GetMoveSpeed() const
+{
+	return AttributeSet->GetMoveSpeed();
+}
+
+void  ASKPlayerCharacter::DecreasePlayerHealth(float val)
+{
+	m_playerHealth -= val;
+	if (m_playerHealth < 0) {
+		m_playerHealth = 0.0f;
+	}
+}
+#pragma endregion AttributeSet
 
 // Called when the game starts or when spawned
 void ASKPlayerCharacter::BeginPlay()
@@ -49,6 +102,81 @@ void ASKPlayerCharacter::BeginPlay()
 		//Sets Player Controller view to the first CameraActor found 
 		PlayerCharacterController->SetViewTargetWithBlend(FoundActors[0], 1.0, EViewTargetBlendFunction::VTBlend_Linear);
 	}
+	if (IsValid(SKAbilitySystemComponent) && AttributeSet) {
+		SKAbilitySystemComponent->InitAbilityActorInfo(this, this);
+		SKAbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetManaAttribute()).AddUObject(this, &ASKPlayerCharacter::OnManaChanged);
+		AddInitialCharacterAbilities();
+		AddInitialCharacterEffects();
+	}
+}
+
+#pragma region Abilities
+void ASKPlayerCharacter::AddInitialCharacterAbilities()
+{
+	if (!SKAbilitySystemComponent || bIsCharacterAbilitiesGranted) {
+		return;
+	}
+
+	// Grant abilities:
+	for (TSubclassOf<USKGameplayAbility> CurrentGameplayAbilityClass : InitialGameplayAbilities)
+	{
+		if (IsValid(CurrentGameplayAbilityClass)) {
+			USKGameplayAbility* CurrentAbility = CurrentGameplayAbilityClass->GetDefaultObject<USKGameplayAbility>();
+			if (IsValid(CurrentAbility)) {
+				FGameplayAbilitySpec AbilitySpec(CurrentAbility, 1, static_cast<int32>(CurrentAbility->AbilityInputID), this);
+				SKAbilitySystemComponent->GiveAbility(AbilitySpec);
+			}
+		}
+	}
+	bIsCharacterAbilitiesGranted = true;
+}
+
+void ASKPlayerCharacter::AddInitialCharacterEffects()
+{
+	if (!SKAbilitySystemComponent || bIsCharacterEffectsGranted) {
+		return;
+	}
+
+	FGameplayEffectContextHandle EffectContextHandle = SKAbilitySystemComponent->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(this);
+
+	for (TSubclassOf<UGameplayEffect> CurrentGameplayEffectClass : InitialGameplayEffects) {
+		if (IsValid(CurrentGameplayEffectClass)) {
+			FGameplayEffectSpecHandle CurrentGameplayEffectSpecHandle = SKAbilitySystemComponent->MakeOutgoingSpec(CurrentGameplayEffectClass, 1.0f, EffectContextHandle);
+			if (CurrentGameplayEffectSpecHandle.IsValid()) {
+				SKAbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CurrentGameplayEffectSpecHandle.Data.Get(), SKAbilitySystemComponent);
+			}
+		}
+	}
+	bIsCharacterAbilitiesGranted = true;
+}
+
+void ASKPlayerCharacter::SetupAbilitiesInputs()
+{
+	if (!SKAbilitySystemComponent || !InputComponent || bIsInputBound) {
+		return;
+	}
+
+	SKAbilitySystemComponent->BindAbilityActivationToInputComponent(
+		InputComponent,
+		FGameplayAbilityInputBinds(
+			"Confirm",
+			"Cancel",
+			"ESK_AbilityInput",
+			static_cast<uint32>(ESK_AbilityInput::Confirm),
+			static_cast<uint32>(ESK_AbilityInput::Cancel)
+		)
+	);
+	bIsInputBound = true;
+}
+#pragma endregion Abilities
+
+void ASKPlayerCharacter::OnManaChanged(const FOnAttributeChangeData& Data)
+{
+	ASKPlayerController* CharacterController = Cast<ASKPlayerController>(GetController());
+	if (IsValid(CharacterController) && IsValid(AttributeSet)) {
+		CharacterController->BP_OnManaChanged(Data.NewValue, AttributeSet->GetMaxMana());
+	}
 }
 
 // Called every frame
@@ -56,17 +184,23 @@ void ASKPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	float speed = 300.0f;
-	if (HorizontalMovement != 0.0) 
+	if (m_IsInvulnerable) {
+		m_InvulnerableTimer -= DeltaTime;
+		if (m_InvulnerableTimer < 0) {
+			m_IsInvulnerable = false;
+		}
+	}
+	if (m_HorizontalMovement != 0.0) 
 	{
 		FVector newLocation = GetRootComponent()->GetComponentLocation();
-		newLocation.Y += DeltaTime * speed * HorizontalMovement;
+		newLocation.Y += DeltaTime * speed * m_HorizontalMovement;
 		newLocation.Y = FMath::Min(FMath::Max(newLocation.Y, -600.0f), 600.0f);
 		SetActorLocation(newLocation);
 	}
 
-	if (VerticalMovement != 0.0) {
+	if (m_VerticalMovement != 0.0) {
 		FVector newLocation = GetRootComponent()->GetComponentLocation();
-		newLocation.X += DeltaTime * speed * VerticalMovement;
+		newLocation.X += DeltaTime * speed * m_VerticalMovement;
 		newLocation.X = FMath::Min(FMath::Max(newLocation.X, -600.0f), 600.0f);
 		SetActorLocation(newLocation);
 	}
@@ -86,18 +220,24 @@ void ASKPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	PlayerInputComponent->BindAction("Wex", IE_Released, this, &ASKPlayerCharacter::HandleWexPressed);
 	PlayerInputComponent->BindAction("Exort", IE_Released, this, &ASKPlayerCharacter::HandleExortPressed);
 	PlayerInputComponent->BindAction("Invoke", IE_Released, this, &ASKPlayerCharacter::HandleInvorkPressed);
+	SetupAbilitiesInputs();
 }
 
 void ASKPlayerCharacter::MoveForward(float Value)
 {
-	VerticalMovement = Value;
+	m_VerticalMovement = Value;
 }
 
 void ASKPlayerCharacter::MoveRight(float Value)
 {
-	HorizontalMovement = Value;
+	m_HorizontalMovement = Value;
 }
 
+
+void ASKPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+}
 
 void ASKPlayerCharacter::HandleQuasPressed() {
 	HanddleOrb(EOrb::QUAS);
@@ -117,9 +257,7 @@ void ASKPlayerCharacter::HanddleOrb(const EOrb eVal) {
 }
 
 void ASKPlayerCharacter::HandleInvorkPressed() {
-
 	int invokeSum = 0;
-
 	for (auto num : VecOrbCombination) {
 		invokeSum += num;
 	}
@@ -152,14 +290,12 @@ void ASKPlayerCharacter::HandleInvorkPressed() {
 		skillInvoked = "Invalid";
 		break;
 	}
+	m_IsInvulnerable = !m_IsInvulnerable;
+	m_InvulnerableTimer = 1.0f;
 	// Display a debug message for five seconds. 
 	// The -1 "Key" value argument prevents the message from being updated or refreshed.
 	check(GEngine != nullptr);
 	GEngine->AddOnScreenDebugMessage(0, 1.0f, FColor::Red, skillInvoked);
 #else
 #endif
-}
-
-void ASKPlayerCharacter::OnBeginOverlap(AActor* otherActor)
-{
 }

@@ -17,6 +17,14 @@ ASKTreasure::ASKTreasure()
 	StaticMeshComponent->SetupAttachment(BoxCollision);
 }
 
+void ASKTreasure::DecreaseHP(float val)
+{
+	m_HP -= val;
+	if (m_HP < 0) {
+		m_HP = 0.f;
+	}
+}
+
 // Called when the game starts or when spawned
 void ASKTreasure::BeginPlay()
 {

@@ -71,4 +71,5 @@ private:
 	int m_enemyCntPerClass = 0;
 	int m_rowPerClass = 0;
 	int m_maxRowIdx = 0;
+	TArray<TArray<int>> m_aliveEnemyPos;
 };
