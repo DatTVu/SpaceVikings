@@ -6,35 +6,46 @@
 #include "SKCharacterBase.h"
 #include "SKEnemyCharacter.generated.h"
 
-/**
- * 
- */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPooledEnemyDespawn, ASKEnemyCharacter*, PooledEnemy);
+
 UCLASS()
 class SPACEVIKINGS_API ASKEnemyCharacter : public ASKCharacterBase
 {
 	GENERATED_BODY()
 public:
-	// Sets default values for this character's properties
 	ASKEnemyCharacter();
 
+	FOnPooledEnemyDespawn OnPooledEnemyDespawn;
+
+	UFUNCTION(BlueprintCallable, Category = "Pooled Actor")
+	void Deactivate();
+
+	// Properties that enable the object to be pooled
 	bool IsActive();
 
 	void SetActive(bool isActive);
 
-	void SetLifeSpan(float lifeSpan);
+	void SetCanMove(bool canMove);
 
-	int GetPoolIndex();
+	bool CanMove();
 
-	void SetPoolIndex(int idx);
+	int GetRowIndex();
 
-	virtual void Tick(float DeltaTime) override;
+	int GetColIndex();
+
+	void SetRowIndex(int idx);
+
+	void SetColIndex(int idx);
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "StaticMesh")
+	class UStaticMeshComponent* StaticMeshComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "BoxCollision")
+	class UBoxComponent* BoxCollision;
 
 protected:
-	bool BIsActive = false;
-
-	float LifeSpan;
-
-	int PoolIndex = 0;
-
-	FTimerHandle LifeSpanTimer;
+	bool m_IsActive = false;
+	bool m_CanMove = false;
+	int m_rowIndex = 0;
+	int m_colIndex = 0;
 };

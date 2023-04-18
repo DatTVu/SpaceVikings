@@ -16,7 +16,4 @@ class SPACEVIKINGS_API ASKPlayerController : public APlayerController
 public: 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BP_OnManaChanged(const float currentMana, const float maxMana);
-
-	UFUNCTION(BlueprintImplementableEvent)
-	void BP_OnExhaustion();
 };

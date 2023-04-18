@@ -2,8 +2,6 @@
 
 #include "../SpaceVikings.h"
 #include "GameFramework/Actor.h"
-#include "Components/SphereComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "SKProjectileBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPooledProjectileDespawn, ASKProjectileBase*, PooledProjectile);
@@ -45,23 +43,19 @@ public:
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 
 	// Sphere collision component.
-	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
-	USphereComponent* CollisionComponent;
+	UPROPERTY(VisibleDefaultsOnly, Category = "Projectile")
+	class USphereComponent* CollisionComponent;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "Projectile")
+	class UStaticMeshComponent* ProjectileMeshComponent;
 
 	// Projectile movement component
-	UPROPERTY(VisibleAnywhere, Category = Movement)
-	UProjectileMovementComponent* ProjectileMovementComponent;
-
-	// Projectile mesh
-	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
-	UStaticMeshComponent* ProjectileMeshComponent;
-
-	// Projectile material
-	UPROPERTY(VisibleDefaultsOnly, Category = Movement)
-	UMaterialInstanceDynamic* ProjectileMaterialInstance;
+	UPROPERTY(VisibleAnywhere, Category = "Movement")
+	class UProjectileMovementComponent* ProjectileMovementComponent;
 
 	//Function to initialize the projectile's velocity in the shoot direction
 	void FireInDirection(const FVector& shootDirection);
+
 protected:
 	bool BIsActive = false;
 	float ProjectileLifeSpan;
